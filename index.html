@@ -4,10 +4,13 @@
 *{box-sizing:border-box}
 body{margin:0;min-height:100vh;font:16px system-ui,sans-serif;color:#fff;display:grid;place-items:center;
  background:#1b1340 url(bg.jpg) center/cover fixed}
-.glass{background:linear-gradient(135deg,rgba(30,20,50,.55),rgba(30,20,50,.35));
+.glass{position:relative;overflow:hidden;
+ background:linear-gradient(135deg,rgba(30,20,50,.55),rgba(30,20,50,.35));
  backdrop-filter:blur(28px) saturate(200%) brightness(.9);-webkit-backdrop-filter:blur(28px) saturate(200%) brightness(.9);
  border:1.5px solid rgba(255,255,255,.55);border-radius:32px;
- box-shadow:0 20px 60px rgba(0,0,0,.45),inset 0 2px 2px rgba(255,255,255,.7),inset 0 -2px 6px rgba(255,255,255,.2),inset 0 0 40px rgba(255,255,255,.08)}
+ box-shadow:0 20px 60px rgba(0,0,0,.45),inset 0 2px 2px rgba(255,255,255,.7),inset 0 -2px 6px rgba(255,255,255,.2),inset 0 0 40px rgba(255,255,255,.08);
+ animation:float 6s ease-in-out infinite}
+@keyframes float{50%{transform:translateY(-6px)}}
 @keyframes pop{from{opacity:0;transform:translateY(12px) scale(.94)}}
 main{width:min(440px,92vw);padding:24px;text-shadow:0 1px 3px rgba(0,0,0,.6)}
 h1{margin:0 0 4px;font-weight:600}
