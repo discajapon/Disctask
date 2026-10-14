@@ -48,6 +48,7 @@ input[type=checkbox]:checked{animation:bounce .5s cubic-bezier(.34,1.56,.64,1);b
 input[type=checkbox]::after{content:"";position:absolute;left:8px;top:3px;width:6px;height:12px;border:solid #fff;border-width:0 3px 3px 0;
  transform:rotate(45deg) scale(0);filter:drop-shadow(0 1px 2px rgba(0,80,30,.6));transition:transform .35s cubic-bezier(.34,1.56,.64,1) .1s}
 input[type=checkbox]:checked::after{transform:rotate(45deg) scale(1)}
+@keyframes bounce{40%{transform:scale(1.3)}}
 .x{padding:2px 9px}
 </style>
 <main class="glass">
