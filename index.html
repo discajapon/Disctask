@@ -56,6 +56,7 @@ input[type=checkbox]:checked::after{transform:rotate(45deg) scale(1)}
 <nav><button id=py title="Año anterior">«</button><button id=p>‹</button><span id=d></span><button id=n>›</button><button id=ny title="Año siguiente">»</button></nav>
 <form id=f><input type=text id=t placeholder="Nueva tarea…" autofocus autocomplete=off><button>＋</button></form>
 <ul id=l></ul>
+<button id=e style="width:100%;margin-top:8px">⬇ Exportar notas</button>
 </main>
 <script>
 const $=i=>document.getElementById(i);
@@ -80,6 +81,9 @@ function render(){
 $('f').onsubmit=e=>{e.preventDefault();const s=$('t').value.trim();if(!s)return;
  (db[day]??=[]).push({text:s,done:false});$('t').value='';save();render()};
 $('p').onclick=()=>shift(-1);$('n').onclick=()=>shift(1);$('py').onclick=()=>shift(-1,1);$('ny').onclick=()=>shift(1,1);
+$('e').onclick=()=>{const a=document.createElement('a');
+ a.href=URL.createObjectURL(new Blob([JSON.stringify(db,null,2)],{type:'application/json'}));
+ a.download='disctask-notas.json';a.click()};
 render();
 const g=document.querySelector('.glass');
 g.onmousemove=e=>{const r=g.getBoundingClientRect();g.style.setProperty('--mx',e.clientX-r.left+'px');g.style.setProperty('--my',e.clientY-r.top+'px')};
