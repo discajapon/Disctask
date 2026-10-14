@@ -11,3 +11,6 @@ Data is stored in `~/.local/share/disctask`.
 
 ## Launcher
 Copy `disctask.desktop` to `~/.local/share/applications/` and replace `/path/to/Disctask` with the real path.
+
+## Export
+The "Exportar notas" button saves all notes to `~/Downloads/disctask-notas.json`.
