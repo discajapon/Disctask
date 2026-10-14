@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Disctask
+Exec=/path/to/Disctask/disctask.py
+Icon=/path/to/Disctask/icon.png
+Terminal=false
+Categories=Utility;
