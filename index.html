@@ -55,7 +55,8 @@ const shift=(n,y)=>{const x=new Date(day+'T12:00');y?x.setFullYear(x.getFullYear
  const v=x.toLocaleDateString('sv');if(v<=MAX){day=v;render()}};
 
 function render(){
- $('d').textContent=new Date(day+'T12:00').toLocaleDateString('es',{weekday:'long',day:'numeric',month:'long'});
+ $('d').textContent=new Date(day+'T12:00').toLocaleDateString('es',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+ $('n').disabled=$('ny').disabled=day>='2040-12-31'||undefined;
  const a=db[day]||[];
  $('l').innerHTML='';
  a.forEach((k,i)=>{const li=document.createElement('li');li.className=k.done?'done':'';
