@@ -41,7 +41,7 @@ input[type=checkbox]{width:20px;height:20px;accent-color:#fff}
 </style>
 <main class="glass">
 <h1>Disctask</h1>
-<nav><button id=p>‹</button><span id=d></span><button id=n>›</button></nav>
+<nav><button id=py title="Año anterior">«</button><button id=p>‹</button><span id=d></span><button id=n>›</button><button id=ny title="Año siguiente">»</button></nav>
 <form id=f><input type=text id=t placeholder="Nueva tarea…" autofocus autocomplete=off><button>＋</button></form>
 <ul id=l></ul>
 </main>
@@ -50,7 +50,10 @@ const $=i=>document.getElementById(i);
 let day=new Date().toLocaleDateString('sv'); // YYYY-MM-DD local
 let db={};try{db=JSON.parse(localStorage.disctask||'{}')}catch{}
 const save=()=>localStorage.disctask=JSON.stringify(db);
-const shift=n=>{const x=new Date(day+'T12:00');x.setDate(x.getDate()+n);day=x.toLocaleDateString('sv');render()};
+const MAX='2040-12-31';
+const shift=(n,y)=>{const x=new Date(day+'T12:00');y?x.setFullYear(x.getFullYear()+n):x.setDate(x.getDate()+n);
+ const v=x.toLocaleDateString('sv');if(v<=MAX){day=v;render()}};
+
 function render(){
  $('d').textContent=new Date(day+'T12:00').toLocaleDateString('es',{weekday:'long',day:'numeric',month:'long'});
  const a=db[day]||[];
@@ -64,7 +67,7 @@ function render(){
   $('l').append(li)})}
 $('f').onsubmit=e=>{e.preventDefault();const s=$('t').value.trim();if(!s)return;
  (db[day]??=[]).push({text:s,done:false});$('t').value='';save();render()};
-$('p').onclick=()=>shift(-1);$('n').onclick=()=>shift(1);
+$('p').onclick=()=>shift(-1);$('n').onclick=()=>shift(1);$('py').onclick=()=>shift(-1,1);$('ny').onclick=()=>shift(1,1);
 render();
 const g=document.querySelector('.glass');
 g.onmousemove=e=>{const r=g.getBoundingClientRect();g.style.setProperty('--mx',e.clientX-r.left+'px');g.style.setProperty('--my',e.clientY-r.top+'px')};
