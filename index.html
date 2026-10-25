@@ -181,6 +181,12 @@ $('wp').onclick=()=>shift(-7);$('wn').onclick=()=>shift(7);$('wt').onclick=()=>{
 let ev=[];try{ev=JSON.parse(localStorage['disctask-cal']||'[]')}catch{}
 const saveEv=()=>localStorage['disctask-cal']=JSON.stringify(ev);
 const hm=m=>String(m/60|0).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
+function lanes(list){ // overlapping events share the column side by side: k -> [lane, lanes]
+ const out=new Map();let group=[],end=-1;
+ const flush=()=>{const ends=[];for(const k of group){let i=ends.findIndex(x=>x<=k.start);if(i<0)i=ends.length;ends[i]=k.end;out.set(k,i)}
+  for(const k of group)out.set(k,[out.get(k),ends.length]);group=[]};
+ for(const k of [...list].sort((a,b)=>a.start-b.start||b.end-a.end)){if(k.start>=end)flush();group.push(k);end=Math.max(end,k.end)}
+ flush();return out}
 function renderEv(){ // updates blocks in place so drags don't restart animations
  const old=new Map([...document.querySelectorAll('.ev')].map(e=>[e.dataset.id,e]));
  document.querySelectorAll('.col').forEach(c=>ev.filter(k=>k.date==c.dataset.d).forEach(k=>{
