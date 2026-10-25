@@ -119,6 +119,17 @@ $('p').onclick=()=>shift(-1);$('n').onclick=()=>shift(1);$('py').onclick=()=>shi
 $('e').onclick=()=>{const a=document.createElement('a');
  a.href=URL.createObjectURL(new Blob([JSON.stringify(db,null,2)],{type:'application/json'}));
  a.download='disctask-notas.json';a.click()};
+const H=44,iso=d=>d.toLocaleDateString('sv'); // H must match --h
+const week=()=>{const m=new Date(day+'T12:00');m.setDate(m.getDate()-(m.getDay()+6)%7);
+ return[...Array(7)].map((_,i)=>{const d=new Date(m);d.setDate(m.getDate()+i);return iso(d)})};
+document.querySelector('.hrs').innerHTML=[...Array(23)].map((_,i)=>`<span style="top:${(i+1)*H}px">${i+1}:00</span>`).join('');
+for(let i=0;i<7;i++)$('g').append(Object.assign(document.createElement('div'),{className:'col'}));
+function renderCal(){
+ const ds=week(),today=iso(new Date());
+ $('wh').innerHTML='<i></i>'+ds.map(d=>{const x=new Date(d+'T12:00');
+  return`<button data-d=${d} class="${d==today?'today':''} ${d==day?'sel':''}">${x.toLocaleDateString('es',{weekday:'short'})}<b>${x.getDate()}</b></button>`}).join('');
+ document.querySelectorAll('.col').forEach((c,i)=>{c.dataset.d=ds[i];c.classList.toggle('today',ds[i]==today)})}
+$('wh').onclick=e=>{const b=e.target.closest('button');if(b){day=b.dataset.d;render()}};
 render();
 const calOpen=o=>{$('w').classList.toggle('cal',o);$('cb').classList.toggle('on',o);localStorage['disctask-calopen']=o?1:'';
  window.webkit?.messageHandlers?.win?.postMessage(o?'wide':'narrow')};
