@@ -89,6 +89,10 @@ main>header{display:flex;align-items:center;justify-content:space-between;gap:8p
  transition:box-shadow .25s,scale .25s cubic-bezier(.34,1.56,.64,1),filter .25s}
 .ev:hover{filter:brightness(1.15);box-shadow:inset 0 1px 1px rgba(255,255,255,.7),0 6px 20px rgba(0,0,0,.35),0 0 16px rgba(var(--c),.6)}
 .ev{animation:pop .45s cubic-bezier(.34,1.56,.64,1)}
+.ev a,#ep a{color:#d6ecff;text-decoration:underline;text-underline-offset:2px;cursor:pointer;transition:color .2s,text-shadow .2s}
+.ev a:hover,#ep a:hover{color:#fff;text-shadow:0 0 10px rgba(255,255,255,.9)}
+#ep{margin:-4px 0 0;padding:0 4px;font-size:.9em;white-space:pre-wrap;overflow-wrap:anywhere;max-height:30vh;overflow:auto}
+#ep:empty{display:none}
 .ev.drag{cursor:grabbing;scale:1.04;z-index:5;filter:brightness(1.15);box-shadow:inset 0 1px 1px rgba(255,255,255,.7),0 14px 30px rgba(0,0,0,.45),0 0 22px rgba(var(--c),.7)}
 .ev i{position:absolute;left:0;right:0;height:8px;cursor:ns-resize;z-index:1}
 .ev .rt{top:0}.ev .rb{bottom:0}
