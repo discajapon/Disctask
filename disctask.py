@@ -13,6 +13,15 @@ def save(dl, name):  # exports land in ~/Downloads, never overwriting
     return True
 ctx.connect('download-started', lambda c, dl: dl.connect('decide-destination', save))
 v = WebKit2.WebView.new_with_context(ctx)
+def policy(v, dec, kind):  # web links open in the default browser, not inside the app
+    if kind in (WebKit2.PolicyDecisionType.NAVIGATION_ACTION, WebKit2.PolicyDecisionType.NEW_WINDOW_ACTION):
+        uri = dec.get_navigation_action().get_request().get_uri()
+        if uri.startswith(('http:', 'https:')):
+            Gtk.show_uri_on_window(w, uri, Gtk.get_current_event_time())
+            dec.ignore()
+            return True
+    return False
+v.connect('decide-policy', policy)
 v.load_uri('file://' + os.path.join(os.path.dirname(os.path.realpath(__file__)), 'index.html'))
 w = Gtk.Window(title='Disctask', default_width=520, default_height=640)
 def resize(m, res):  # page asks for room when the calendar opens/closes
