@@ -202,7 +202,7 @@ $('g').onpointerdown=e=>{
  const c=e.target.closest('.col'),el=e.target.closest('.ev');
  if(e.button||!c||e.target.closest('a'))return;
  if(el){const k=ev.find(k=>k.id==el.dataset.id);
-  drag={k,mode:'move',x0:e.clientX,y0:e.clientY,s0:k.start,e0:k.end};return}
+  drag={k,mode:{rt:'top',rb:'bot'}[e.target.className]||'move',x0:e.clientX,y0:e.clientY,s0:k.start,e0:k.end};return}
  if(e.target!=c)return;
  const s=Math.min(Math.floor((e.clientY-$('g').getBoundingClientRect().top)*4/H)*15,1425);
  const k={id:Date.now().toString(36),date:c.dataset.d,start:s,end:s+15,title:'',color:'167,139,250',desc:''};
@@ -230,6 +230,8 @@ addEventListener('pointermove',e=>{if(!drag)return;const{k}=drag;
  drag.moved||=Math.abs(e.clientX-drag.x0)+Math.abs(e.clientY-drag.y0)>4;if(!drag.moved)return;
  const m=minAt(e.clientY);
  if(drag.mode=='new'){k.start=Math.min(drag.s0,m);k.end=Math.max(drag.s0+15,m);if(k.end-k.start<15)k.start=k.end-15}
+ else if(drag.mode=='top')k.start=clamp(snap(drag.s0+(e.clientY-drag.y0)*60/H),0,k.end-15);
+ else if(drag.mode=='bot')k.end=clamp(snap(drag.e0+(e.clientY-drag.y0)*60/H),k.start+15,1440);
  else{const dy=snap((e.clientY-drag.y0)*60/H),len=drag.e0-drag.s0;
   k.start=clamp(drag.s0+dy,0,1440-len);k.end=k.start+len;
   const to=[...document.querySelectorAll('.col')].find(c=>{const r=c.getBoundingClientRect();return e.clientX>=r.left&&e.clientX<r.right});
