@@ -219,7 +219,7 @@ $('g').onpointerdown=e=>{
   drag={k,mode:{rt:'top',rb:'bot'}[e.target.className]||'move',x0:e.clientX,y0:e.clientY,s0:k.start,e0:k.end};return}
  if(e.target!=c)return;
  const s=Math.min(Math.floor((e.clientY-$('g').getBoundingClientRect().top)*4/H)*15,1425);
- const k={id:Date.now().toString(36),date:c.dataset.d,start:s,end:s+15,title:'',color:'167,139,250',desc:''};
+ const k={id:Date.now().toString(36),date:c.dataset.d,start:s,end:s+15,title:'',color:localStorage['disctask-color']||COLORS.Lavanda,desc:''};
  ev.push(k);drag={k,mode:'new',x0:e.clientX,y0:e.clientY,s0:s,e0:s+15};renderEv()};
 const COLORS={Lavanda:'167,139,250',Cielo:'96,165,250',Turquesa:'34,211,238',Menta:'52,211,153',Lima:'163,230,53',
  Ámbar:'251,191,36',Coral:'251,113,133',Rosa:'244,114,182',Niebla:'203,213,225'};
@@ -232,7 +232,7 @@ function openEditor(k,isNew){edit={k,isNew};
  $('dlg').returnValue='';$('dlg').showModal();$('et').focus()}
 $('dlg').onclose=()=>{const{k,isNew}=edit;
  if($('dlg').returnValue=='ok'){
-  k.title=$('et').value.trim();k.color=$('es').querySelector(':checked').value;k.desc=$('ex').value.trim();k.date=$('ed').value||k.date;
+  k.title=$('et').value.trim();k.color=localStorage['disctask-color']=$('es').querySelector(':checked').value;k.desc=$('ex').value.trim();k.date=$('ed').value||k.date;
   k.start=Math.min(toMin($('e1').value),1425);k.end=toMin($('e2').value)||1440; // 00:00 as end = midnight
   if(k.end<=k.start)k.end=Math.min(k.start+60,1440);
   if(k.date!=day&&!week().includes(k.date)){day=k.date;render()} // follow it to its week
