@@ -112,7 +112,8 @@ function render(){
   const c=li.querySelector('input');c.checked=k.done;
   c.onchange=()=>{k.done=c.checked;save();render()};
   li.querySelector('.x').onclick=()=>{a.splice(i,1);save();render()};
-  $('l').append(li)})}
+  $('l').append(li)});
+ renderCal()}
 $('f').onsubmit=e=>{e.preventDefault();const s=$('t').value.trim();if(!s)return;
  (db[day]??=[]).push({text:s,done:false});$('t').value='';save();render()};
 $('p').onclick=()=>shift(-1);$('n').onclick=()=>shift(1);$('py').onclick=()=>shift(-1,1);$('ny').onclick=()=>shift(1,1);
