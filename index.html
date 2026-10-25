@@ -90,6 +90,11 @@ main>header{display:flex;align-items:center;justify-content:space-between;gap:8p
 .ev:hover{filter:brightness(1.15);box-shadow:inset 0 1px 1px rgba(255,255,255,.7),0 6px 20px rgba(0,0,0,.35),0 0 16px rgba(var(--c),.6)}
 .ev{animation:pop .45s cubic-bezier(.34,1.56,.64,1)}
 .ev.drag{cursor:grabbing;scale:1.04;z-index:5;filter:brightness(1.15);box-shadow:inset 0 1px 1px rgba(255,255,255,.7),0 14px 30px rgba(0,0,0,.45),0 0 22px rgba(var(--c),.7)}
+.ev i{position:absolute;left:0;right:0;height:8px;cursor:ns-resize;z-index:1}
+.ev .rt{top:0}.ev .rb{bottom:0}
+.ev i::after{content:"";position:absolute;left:50%;width:24px;height:3px;translate:-50% 0;border-radius:3px;background:rgba(255,255,255,.8);opacity:0;transition:opacity .2s}
+.ev .rt::after{top:2px}.ev .rb::after{bottom:2px}
+.ev:hover i::after,.ev.drag i::after{opacity:1}
 .ev b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ev small{opacity:.85}
 .ev p{margin:3px 0 0;opacity:.92;white-space:pre-wrap;overflow-wrap:anywhere}
