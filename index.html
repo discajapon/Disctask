@@ -167,6 +167,23 @@ function renderEv(){
 function nowLine(){document.querySelector('.now')?.remove();const n=new Date(),c=document.querySelector(`.col[data-d="${iso(n)}"]`);
  c?.append(Object.assign(document.createElement('div'),{className:'now',style:`top:${(n.getHours()*60+n.getMinutes())*H/60}px`}))}
 setInterval(nowLine,60000);
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v)),snap=m=>Math.round(m/15)*15;
+const minAt=y=>clamp(snap((y-$('g').getBoundingClientRect().top)*60/H),0,1440);
+let drag=null; // {k,mode,x0,y0,s0,e0,moved}
+$('g').onpointerdown=e=>{
+ const c=e.target.closest('.col');
+ if(e.button||!c||e.target!=c)return;
+ const s=Math.min(Math.floor((e.clientY-$('g').getBoundingClientRect().top)*4/H)*15,1425);
+ const k={id:Date.now().toString(36),date:c.dataset.d,start:s,end:s+15,title:'',color:'167,139,250',desc:''};
+ ev.push(k);fresh=k.id;drag={k,mode:'new',x0:e.clientX,y0:e.clientY,s0:s,e0:s+15};renderEv()};
+addEventListener('pointermove',e=>{if(!drag)return;const{k}=drag;
+ drag.moved||=Math.abs(e.clientX-drag.x0)+Math.abs(e.clientY-drag.y0)>4;if(!drag.moved)return;
+ const m=minAt(e.clientY);
+ if(drag.mode=='new'){k.start=Math.min(drag.s0,m);k.end=Math.max(drag.s0+15,m);if(k.end-k.start<15)k.start=k.end-15}
+ renderEv()});
+addEventListener('pointerup',()=>{if(!drag)return;const{k,mode,moved}=drag;drag=null;
+ if(mode=='new'&&!moved)k.end=Math.min(k.start+60,1440);
+ saveEv();renderEv();fresh=null});
 $('wh').onclick=e=>{const b=e.target.closest('button');if(b){day=b.dataset.d;render()}};
 render();
 $('sc').scrollTop=7*H;
