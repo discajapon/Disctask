@@ -15,4 +15,10 @@ ctx.connect('download-started', lambda c, dl: dl.connect('decide-destination', s
 v = WebKit2.WebView.new_with_context(ctx)
 v.load_uri('file://' + os.path.join(os.path.dirname(os.path.realpath(__file__)), 'index.html'))
 w = Gtk.Window(title='Disctask', default_width=520, default_height=640)
+def resize(m, res):  # page asks for room when the calendar opens/closes
+    if not w.is_maximized():
+        w.resize(1320 if res.get_js_value().to_string() == 'wide' else 520, max(w.get_size()[1], 760))
+m = v.get_user_content_manager()
+m.register_script_message_handler('win')
+m.connect('script-message-received::win', resize)
 w.add(v); w.connect('destroy', Gtk.main_quit); w.show_all(); Gtk.main()
