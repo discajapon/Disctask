@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 import gi, os
 gi.require_version('Gtk','3.0'); gi.require_version('WebKit2','4.1')
-from gi.repository import Gtk, WebKit2
+from gi.repository import Gtk, WebKit2, GLib
+GLib.set_prgname('disctask')  # Wayland app id; must match disctask.desktop for the dock icon
 def gl_ok():  # forcing the GPU renderer aborts the app when GDK has no OpenGL, so probe first
     t = Gtk.Window(); t.realize()
     try: t.get_window().create_gl_context().realize(); return True
@@ -32,6 +33,7 @@ def policy(v, dec, kind):  # web links open in the default browser, not inside t
 v.connect('decide-policy', policy)
 v.load_uri('file://' + os.path.join(os.path.dirname(os.path.realpath(__file__)), 'index.html'))
 w = Gtk.Window(title='Disctask', default_width=520, default_height=640)
+w.set_icon_from_file(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'icon.png'))
 def resize(m, res):  # page asks for room when the calendar opens/closes
     if not w.is_maximized():
         w.resize(1320 if res.get_js_value().to_string() == 'wide' else 520, max(w.get_size()[1], 760))
