@@ -191,6 +191,21 @@ $('g').onpointerdown=e=>{
  const s=Math.min(Math.floor((e.clientY-$('g').getBoundingClientRect().top)*4/H)*15,1425);
  const k={id:Date.now().toString(36),date:c.dataset.d,start:s,end:s+15,title:'',color:'167,139,250',desc:''};
  ev.push(k);drag={k,mode:'new',x0:e.clientX,y0:e.clientY,s0:s,e0:s+15};renderEv()};
+let edit=null; // {k,isNew}
+const toMin=v=>v?+v.slice(0,2)*60+ +v.slice(3,5):0;
+function openEditor(k,isNew){edit={k,isNew};
+ $('et').value=k.title;$('ed').value=k.date;$('e1').value=hm(k.start);$('e2').value=hm(k.end%1440);$('ex').value=k.desc;
+ $('dlg').returnValue='';$('dlg').showModal();$('et').focus()}
+$('dlg').onclose=()=>{const{k,isNew}=edit;
+ if($('dlg').returnValue=='ok'){
+  k.title=$('et').value.trim();k.desc=$('ex').value.trim();k.date=$('ed').value||k.date;
+  k.start=Math.min(toMin($('e1').value),1425);k.end=toMin($('e2').value)||1440; // 00:00 as end = midnight
+  if(k.end<=k.start)k.end=Math.min(k.start+60,1440);
+  if(k.date!=day&&!week().includes(k.date)){day=k.date;render()} // follow it to its week
+ }else if(isNew&&$('dlg').returnValue!='del')ev.splice(ev.indexOf(k),1);
+ saveEv();renderEv()};
+$('ecan').onclick=()=>$('dlg').close();
+$('edel').onclick=()=>{ev.splice(ev.indexOf(edit.k),1);$('dlg').close('del')};
 addEventListener('pointermove',e=>{if(!drag)return;const{k}=drag;
  drag.moved||=Math.abs(e.clientX-drag.x0)+Math.abs(e.clientY-drag.y0)>4;if(!drag.moved)return;
  const m=minAt(e.clientY);
