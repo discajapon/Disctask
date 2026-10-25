@@ -99,6 +99,12 @@ dialog::backdrop{background:rgba(15,8,40,.35);backdrop-filter:blur(3px)}
 #ef input,#ef textarea{font:inherit;color:inherit;padding:8px 12px;border-radius:14px;border:1px solid rgba(255,255,255,.3);background:rgba(0,0,0,.25);outline:none;color-scheme:dark;transition:box-shadow .3s,background .3s}
 #ef input:focus,#ef textarea:focus{background:rgba(0,0,0,.35);box-shadow:0 0 0 2px rgba(255,255,255,.6),0 0 24px rgba(255,255,255,.35)}
 #et{font-size:1.2em;font-weight:600}
+#es{display:flex;flex-wrap:wrap;gap:8px}
+#es input{appearance:none;-webkit-appearance:none;width:28px;height:28px;margin:0;border-radius:50%;cursor:pointer;
+ background:linear-gradient(135deg,rgba(var(--c),.75),rgba(var(--c),.3));border:1.5px solid rgba(var(--c),1);
+ box-shadow:inset 0 2px 2px rgba(255,255,255,.6),0 2px 8px rgba(0,0,0,.3);transition:scale .3s cubic-bezier(.34,1.56,.64,1),box-shadow .3s}
+#es input:hover{scale:1.15}
+#es input:checked{scale:1.2;box-shadow:inset 0 2px 2px rgba(255,255,255,.8),0 0 0 2px #fff,0 0 16px rgba(var(--c),.9)}
 #ex{resize:vertical;min-height:80px}
 #ef input[type=time]{flex:1}
 @media(max-width:900px){:root{--cw:min(760px,92vw)}.wrap{flex-direction:column}#cal{height:0;transition-property:height,margin,opacity,scale,translate}.wrap.cal #cal{margin:20px 0 0;height:min(720px,85vh)}}
