@@ -78,6 +78,9 @@ main>header{display:flex;align-items:center;justify-content:space-between;gap:8p
 .col{position:relative;border-left:1px solid rgba(255,255,255,.12);cursor:crosshair;
  background:repeating-linear-gradient(to bottom,rgba(255,255,255,.13) 0 1px,transparent 1px var(--h))}
 .col.today{background-color:rgba(255,255,255,.07)}
+.now{position:absolute;left:0;right:0;height:2px;z-index:3;pointer-events:none;background:#ff9ec4;box-shadow:0 0 10px #ff9ec4}
+.now::before{content:"";position:absolute;left:-5px;top:-4px;width:10px;height:10px;border-radius:50%;background:inherit;box-shadow:inherit;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{50%{scale:1.5}}
 @media(max-width:900px){:root{--cw:min(760px,92vw)}.wrap{flex-direction:column}#cal{height:0;transition-property:height,margin,opacity,scale,translate}.wrap.cal #cal{margin:20px 0 0;height:min(720px,85vh)}}
 </style>
 <div class=wrap id=w>
