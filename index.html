@@ -150,6 +150,20 @@ function renderCal(){
  document.querySelectorAll('.col').forEach((c,i)=>{c.dataset.d=ds[i];c.classList.toggle('today',ds[i]==today)});
  nowLine()}
 $('wp').onclick=()=>shift(-7);$('wn').onclick=()=>shift(7);$('wt').onclick=()=>{day=iso(new Date());render()};
+let ev=[];try{ev=JSON.parse(localStorage['disctask-cal']||'[]')}catch{}
+const saveEv=()=>localStorage['disctask-cal']=JSON.stringify(ev);
+const hm=m=>String(m/60|0).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
+let fresh=null; // id of the event that should pop in
+function renderEv(){
+ document.querySelectorAll('.ev').forEach(e=>e.remove());
+ document.querySelectorAll('.col').forEach(c=>ev.filter(k=>k.date==c.dataset.d).forEach(k=>{
+  const el=document.createElement('div');el.className='ev'+(k.id==fresh?' fresh':'');el.dataset.id=k.id;
+  el.style.cssText=`top:${k.start*H/60}px;height:${(k.end-k.start)*H/60}px;--c:${k.color}`;
+  el.innerHTML='<b></b><small></small><p></p>';
+  el.querySelector('b').textContent=k.title||'(sin título)';
+  el.querySelector('small').textContent=hm(k.start)+' – '+hm(k.end);
+  el.querySelector('p').textContent=k.desc||'';
+  c.append(el)}))}
 function nowLine(){document.querySelector('.now')?.remove();const n=new Date(),c=document.querySelector(`.col[data-d="${iso(n)}"]`);
  c?.append(Object.assign(document.createElement('div'),{className:'now',style:`top:${(n.getHours()*60+n.getMinutes())*H/60}px`}))}
 setInterval(nowLine,60000);
