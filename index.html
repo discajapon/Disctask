@@ -185,7 +185,7 @@ function renderEv(){ // updates blocks in place so drags don't restart animation
  const old=new Map([...document.querySelectorAll('.ev')].map(e=>[e.dataset.id,e]));
  document.querySelectorAll('.col').forEach(c=>ev.filter(k=>k.date==c.dataset.d).forEach(k=>{
   let el=old.get(k.id);old.delete(k.id);
-  if(!el){el=document.createElement('div');el.className='ev';el.dataset.id=k.id;el.innerHTML='<b></b><small></small><p></p>'}
+  if(!el){el=document.createElement('div');el.className='ev';el.dataset.id=k.id;el.innerHTML='<i class=rt></i><b></b><small></small><p></p><i class=rb></i>'}
   el.style.cssText=`top:${k.start*H/60}px;height:${(k.end-k.start)*H/60}px;--c:${k.color}`;
   el.querySelector('b').textContent=k.title||'(sin título)';
   el.querySelector('small').textContent=hm(k.start)+' – '+hm(k.end);
