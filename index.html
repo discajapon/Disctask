@@ -198,6 +198,9 @@ $('g').onpointerdown=e=>{
  const s=Math.min(Math.floor((e.clientY-$('g').getBoundingClientRect().top)*4/H)*15,1425);
  const k={id:Date.now().toString(36),date:c.dataset.d,start:s,end:s+15,title:'',color:'167,139,250',desc:''};
  ev.push(k);drag={k,mode:'new',x0:e.clientX,y0:e.clientY,s0:s,e0:s+15};renderEv()};
+const COLORS={Lavanda:'167,139,250',Cielo:'96,165,250',Turquesa:'34,211,238',Menta:'52,211,153',Lima:'163,230,53',
+ Ámbar:'251,191,36',Coral:'251,113,133',Rosa:'244,114,182',Niebla:'203,213,225'};
+$('es').innerHTML=Object.entries(COLORS).map(([n,c])=>`<input type=radio name=ec value="${c}" title="${n}" style="--c:${c}">`).join('');
 let edit=null; // {k,isNew}
 const toMin=v=>v?+v.slice(0,2)*60+ +v.slice(3,5):0;
 function openEditor(k,isNew){edit={k,isNew};
