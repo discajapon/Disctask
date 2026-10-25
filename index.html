@@ -81,6 +81,17 @@ main>header{display:flex;align-items:center;justify-content:space-between;gap:8p
 .now{position:absolute;left:0;right:0;height:2px;z-index:3;pointer-events:none;background:#ff9ec4;box-shadow:0 0 10px #ff9ec4}
 .now::before{content:"";position:absolute;left:-5px;top:-4px;width:10px;height:10px;border-radius:50%;background:inherit;box-shadow:inherit;animation:pulse 2s ease-in-out infinite}
 @keyframes pulse{50%{scale:1.5}}
+.grid{user-select:none;-webkit-user-select:none}
+.ev{position:absolute;left:3px;right:3px;z-index:2;padding:4px 7px;border-radius:12px;overflow:hidden;cursor:grab;font-size:.74em;line-height:1.25;
+ background:linear-gradient(135deg,rgba(var(--c),.55),rgba(var(--c),.22));border:1px solid rgba(var(--c),.9);
+ backdrop-filter:blur(8px) saturate(160%);-webkit-backdrop-filter:blur(8px) saturate(160%);
+ box-shadow:inset 0 1px 1px rgba(255,255,255,.6),0 4px 14px rgba(0,0,0,.25);
+ transition:box-shadow .25s,scale .25s cubic-bezier(.34,1.56,.64,1),filter .25s}
+.ev:hover{filter:brightness(1.15);box-shadow:inset 0 1px 1px rgba(255,255,255,.7),0 6px 20px rgba(0,0,0,.35),0 0 16px rgba(var(--c),.6)}
+.ev.fresh{animation:pop .45s cubic-bezier(.34,1.56,.64,1)}
+.ev b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev small{opacity:.85}
+.ev p{margin:3px 0 0;opacity:.92;white-space:pre-wrap;overflow-wrap:anywhere}
 @media(max-width:900px){:root{--cw:min(760px,92vw)}.wrap{flex-direction:column}#cal{height:0;transition-property:height,margin,opacity,scale,translate}.wrap.cal #cal{margin:20px 0 0;height:min(720px,85vh)}}
 </style>
 <div class=wrap id=w>
