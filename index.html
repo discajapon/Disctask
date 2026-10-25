@@ -189,14 +189,14 @@ function lanes(list){ // overlapping events share the column side by side: k -> 
  flush();return out}
 function renderEv(){ // updates blocks in place so drags don't restart animations
  const old=new Map([...document.querySelectorAll('.ev')].map(e=>[e.dataset.id,e]));
- document.querySelectorAll('.col').forEach(c=>ev.filter(k=>k.date==c.dataset.d).forEach(k=>{
+ document.querySelectorAll('.col').forEach(c=>{const L=lanes(ev.filter(k=>k.date==c.dataset.d));L.forEach(([i,n],k)=>{
   let el=old.get(k.id);old.delete(k.id);
   if(!el){el=document.createElement('div');el.className='ev';el.dataset.id=k.id;el.innerHTML='<i class=rt></i><b></b><small></small><p></p><i class=rb></i>'}
-  el.style.cssText=`top:${k.start*H/60}px;height:${(k.end-k.start)*H/60}px;--c:${k.color}`;
+  el.style.cssText=`top:${k.start*H/60}px;height:${(k.end-k.start)*H/60}px;--c:${k.color};left:calc(3px + (100% - 6px)*${i/n});width:calc((100% - 6px)/${n} - ${n>1?2:0}px)`;
   el.querySelector('b').textContent=k.title||'(sin título)';
   el.querySelector('small').textContent=hm(k.start)+' – '+hm(k.end);
   el.querySelector('p').textContent=k.desc||'';
-  if(el.parentNode!=c)c.append(el)}));
+  if(el.parentNode!=c)c.append(el)})});
  old.forEach(e=>e.remove())}
 function nowLine(){document.querySelector('.now')?.remove();const n=new Date(),c=document.querySelector(`.col[data-d="${iso(n)}"]`);
  c?.append(Object.assign(document.createElement('div'),{className:'now',style:`top:${(n.getHours()*60+n.getMinutes())*H/60}px`}))}
