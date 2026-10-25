@@ -103,6 +103,10 @@ $('e').onclick=()=>{const a=document.createElement('a');
  a.href=URL.createObjectURL(new Blob([JSON.stringify(db,null,2)],{type:'application/json'}));
  a.download='disctask-notas.json';a.click()};
 render();
+const calOpen=o=>{$('w').classList.toggle('cal',o);$('cb').classList.toggle('on',o);localStorage['disctask-calopen']=o?1:'';
+ window.webkit?.messageHandlers?.win?.postMessage(o?'wide':'narrow')};
+$('cb').onclick=()=>calOpen(!$('w').classList.contains('cal'));
+calOpen(!!localStorage['disctask-calopen']);
 const g=document.querySelector('.glass');
 g.onmousemove=e=>{const r=g.getBoundingClientRect();g.style.setProperty('--mx',e.clientX-r.left+'px');g.style.setProperty('--my',e.clientY-r.top+'px')};
 </script>
