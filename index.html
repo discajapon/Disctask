@@ -225,9 +225,15 @@ addEventListener('pointermove',e=>{if(!drag)return;const{k}=drag;
  drag.moved||=Math.abs(e.clientX-drag.x0)+Math.abs(e.clientY-drag.y0)>4;if(!drag.moved)return;
  const m=minAt(e.clientY);
  if(drag.mode=='new'){k.start=Math.min(drag.s0,m);k.end=Math.max(drag.s0+15,m);if(k.end-k.start<15)k.start=k.end-15}
+ else{const dy=snap((e.clientY-drag.y0)*60/H),len=drag.e0-drag.s0;
+  k.start=clamp(drag.s0+dy,0,1440-len);k.end=k.start+len;
+  const to=[...document.querySelectorAll('.col')].find(c=>{const r=c.getBoundingClientRect();return e.clientX>=r.left&&e.clientX<r.right});
+  if(to)k.date=to.dataset.d}
+ document.querySelector(`.ev[data-id="${k.id}"]`)?.classList.add('drag');
  renderEv()});
 addEventListener('pointerup',()=>{if(!drag)return;const{k,mode,moved}=drag;drag=null;
  if(mode=='new'&&!moved)k.end=Math.min(k.start+60,1440);
+ document.querySelector('.ev.drag')?.classList.remove('drag');
  saveEv();renderEv();
  if(mode=='new')openEditor(k,true)});
 $('wh').onclick=e=>{const b=e.target.closest('button');if(b){day=b.dataset.d;render()}};
