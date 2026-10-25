@@ -166,7 +166,7 @@ $('f').onsubmit=e=>{e.preventDefault();const s=$('t').value.trim();if(!s)return;
  (db[day]??=[]).push({text:s,done:false});$('t').value='';save();render()};
 $('p').onclick=()=>shift(-1);$('n').onclick=()=>shift(1);$('py').onclick=()=>shift(-1,1);$('ny').onclick=()=>shift(1,1);
 $('e').onclick=()=>{const a=document.createElement('a');
- a.href=URL.createObjectURL(new Blob([JSON.stringify(db,null,2)],{type:'application/json'}));
+ a.href=URL.createObjectURL(new Blob([JSON.stringify({tareas:db,horarios:ev},null,2)],{type:'application/json'}));
  a.download='disctask-notas.json';a.click()};
 const H=44,iso=d=>d.toLocaleDateString('sv'); // H must match --h
 const week=()=>{const m=new Date(day+'T12:00');m.setDate(m.getDate()-(m.getDay()+6)%7);
