@@ -148,7 +148,7 @@ function renderCal(){
  $('wl').textContent=f(ds[0])+' – '+f(ds[6]);
  $('wn').disabled=ds[6]>=MAX||undefined;
  document.querySelectorAll('.col').forEach((c,i)=>{c.dataset.d=ds[i];c.classList.toggle('today',ds[i]==today)});
- nowLine()}
+ nowLine();renderEv()}
 $('wp').onclick=()=>shift(-7);$('wn').onclick=()=>shift(7);$('wt').onclick=()=>{day=iso(new Date());render()};
 let ev=[];try{ev=JSON.parse(localStorage['disctask-cal']||'[]')}catch{}
 const saveEv=()=>localStorage['disctask-cal']=JSON.stringify(ev);
