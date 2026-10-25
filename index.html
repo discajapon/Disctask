@@ -66,6 +66,7 @@ main>header{display:flex;align-items:center;justify-content:space-between;gap:8p
 .ci{width:var(--cw);height:100%;padding:20px;display:flex;flex-direction:column;text-shadow:0 1px 3px rgba(0,0,0,.6)}
 @media(max-width:900px){:root{--cw:min(760px,92vw)}.wrap{flex-direction:column}.wrap.cal #cal{margin:20px 0 0}}
 </style>
+<div class=wrap id=w>
 <main class="glass">
 <h1>Disctask</h1>
 <nav><button id=py title="Año anterior">«</button><button id=p>‹</button><span id=d></span><button id=n>›</button><button id=ny title="Año siguiente">»</button></nav>
@@ -73,6 +74,8 @@ main>header{display:flex;align-items:center;justify-content:space-between;gap:8p
 <ul id=l></ul>
 <button id=e style="width:100%;margin-top:8px">⬇ Exportar notas</button>
 </main>
+<aside id=cal class=glass><div class=ci></div></aside>
+</div>
 <script>
 const $=i=>document.getElementById(i);
 let day=new Date().toLocaleDateString('sv'); // YYYY-MM-DD local
