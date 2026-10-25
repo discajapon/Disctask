@@ -185,6 +185,9 @@ $('wp').onclick=()=>shift(-7);$('wn').onclick=()=>shift(7);$('wt').onclick=()=>{
 let ev=[];try{ev=JSON.parse(localStorage['disctask-cal']||'[]')}catch{}
 const saveEv=()=>localStorage['disctask-cal']=JSON.stringify(ev);
 const hm=m=>String(m/60|0).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
+const esc=s=>s.replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
+const linkify=s=>s.split(/((?:https?:\/\/|\bwww\.)\S*[^\s.,;:!?)\]'"])/i).map((p,i)=>i%2
+ ?`<a href="${esc(/^www\./i.test(p)?'https://'+p:p)}" target=_blank rel=noopener>${esc(p)}</a>`:esc(p)).join('');
 function lanes(list){ // overlapping events share the column side by side: k -> [lane, lanes]
  const out=new Map();let group=[],end=-1;
  const flush=()=>{const ends=[];for(const k of group){let i=ends.findIndex(x=>x<=k.start);if(i<0)i=ends.length;ends[i]=k.end;out.set(k,i)}
@@ -199,7 +202,7 @@ function renderEv(){ // updates blocks in place so drags don't restart animation
   el.style.cssText=`top:${k.start*H/60}px;height:${(k.end-k.start)*H/60}px;--c:${k.color};left:calc(3px + (100% - 6px)*${i/n});width:calc((100% - 6px)/${n} - ${n>1?2:0}px)`;
   el.querySelector('b').textContent=k.title||'(sin título)';
   el.querySelector('small').textContent=hm(k.start)+' – '+hm(k.end);
-  el.querySelector('p').textContent=k.desc||'';
+  el.querySelector('p').innerHTML=linkify(k.desc||'');
   if(el.parentNode!=c)c.append(el)})});
  old.forEach(e=>e.remove())}
 function nowLine(){document.querySelector('.now')?.remove();const n=new Date(),c=document.querySelector(`.col[data-d="${iso(n)}"]`);
