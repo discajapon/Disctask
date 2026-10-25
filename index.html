@@ -64,7 +64,7 @@ main>header{display:flex;align-items:center;justify-content:space-between;gap:8p
  transition:width .7s cubic-bezier(.34,1.25,.64,1),margin .7s cubic-bezier(.34,1.25,.64,1),opacity .45s,scale .7s cubic-bezier(.34,1.56,.64,1),translate .7s cubic-bezier(.34,1.56,.64,1)}
 .wrap.cal #cal{width:var(--cw);margin-left:20px;opacity:1;border-width:1.5px;scale:1;translate:0;pointer-events:auto}
 .ci{width:var(--cw);height:100%;padding:20px;display:flex;flex-direction:column;text-shadow:0 1px 3px rgba(0,0,0,.6)}
-@media(max-width:900px){:root{--cw:min(760px,92vw)}.wrap{flex-direction:column}.wrap.cal #cal{margin:20px 0 0}}
+@media(max-width:900px){:root{--cw:min(760px,92vw)}.wrap{flex-direction:column}#cal{height:0;transition-property:height,margin,opacity,scale,translate}.wrap.cal #cal{margin:20px 0 0;height:min(720px,85vh)}}
 </style>
 <div class=wrap id=w>
 <main class="glass">
