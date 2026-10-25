@@ -92,6 +92,15 @@ main>header{display:flex;align-items:center;justify-content:space-between;gap:8p
 .ev b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ev small{opacity:.85}
 .ev p{margin:3px 0 0;opacity:.92;white-space:pre-wrap;overflow-wrap:anywhere}
+dialog.glass{position:fixed;width:min(420px,92vw);padding:22px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.6);animation:pop .45s cubic-bezier(.34,1.56,.64,1)}
+dialog::backdrop{background:rgba(15,8,40,.35);backdrop-filter:blur(3px)}
+#ef{flex-direction:column;gap:12px;margin:0}
+#ef .row{display:flex;align-items:center;gap:8px}
+#ef input,#ef textarea{font:inherit;color:inherit;padding:8px 12px;border-radius:14px;border:1px solid rgba(255,255,255,.3);background:rgba(0,0,0,.25);outline:none;color-scheme:dark;transition:box-shadow .3s,background .3s}
+#ef input:focus,#ef textarea:focus{background:rgba(0,0,0,.35);box-shadow:0 0 0 2px rgba(255,255,255,.6),0 0 24px rgba(255,255,255,.35)}
+#et{font-size:1.2em;font-weight:600}
+#ex{resize:vertical;min-height:80px}
+#ef input[type=time]{flex:1}
 @media(max-width:900px){:root{--cw:min(760px,92vw)}.wrap{flex-direction:column}#cal{height:0;transition-property:height,margin,opacity,scale,translate}.wrap.cal #cal{margin:20px 0 0;height:min(720px,85vh)}}
 </style>
 <div class=wrap id=w>
