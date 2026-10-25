@@ -132,6 +132,7 @@ function renderCal(){
  document.querySelectorAll('.col').forEach((c,i)=>{c.dataset.d=ds[i];c.classList.toggle('today',ds[i]==today)})}
 $('wh').onclick=e=>{const b=e.target.closest('button');if(b){day=b.dataset.d;render()}};
 render();
+$('sc').scrollTop=7*H;
 const calOpen=o=>{$('w').classList.toggle('cal',o);$('cb').classList.toggle('on',o);localStorage['disctask-calopen']=o?1:'';
  window.webkit?.messageHandlers?.win?.postMessage(o?'wide':'narrow')};
 $('cb').onclick=()=>calOpen(!$('w').classList.contains('cal'));
