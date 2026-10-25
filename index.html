@@ -59,11 +59,25 @@ input[type=checkbox]:checked::after{transform:rotate(45deg) scale(1)}
 .wrap{display:flex;align-items:center;justify-content:center;padding:24px 16px}
 main>header{display:flex;align-items:center;justify-content:space-between;gap:8px}
 #cb.on{background:rgba(255,255,255,.45);box-shadow:0 0 18px rgba(255,255,255,.45),inset 0 1px 1px rgba(255,255,255,.8)}
-:root{--cw:min(760px,calc(100vw - 540px))}
+:root{--h:44px;--cw:min(760px,calc(100vw - 540px))}
 #cal{flex:none;width:0;height:min(720px,calc(100vh - 48px));opacity:0;border-width:0;scale:.92;translate:-40px 0;pointer-events:none;
  transition:width .7s cubic-bezier(.34,1.25,.64,1),margin .7s cubic-bezier(.34,1.25,.64,1),opacity .45s,scale .7s cubic-bezier(.34,1.56,.64,1),translate .7s cubic-bezier(.34,1.56,.64,1)}
 .wrap.cal #cal{width:var(--cw);margin-left:20px;opacity:1;border-width:1.5px;scale:1;translate:0;pointer-events:auto}
 .ci{width:var(--cw);height:100%;padding:20px;display:flex;flex-direction:column;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+.wh,.grid{display:grid;grid-template-columns:46px repeat(7,1fr)}
+.wh{padding-right:8px}
+.wh button{margin:0 3px 8px;padding:4px 0;border-radius:12px;display:flex;flex-direction:column;align-items:center;line-height:1.2;font-size:.78em;text-transform:capitalize}
+.wh b{font-size:1.4em;font-weight:600}
+.wh .today b{text-shadow:0 0 12px rgba(255,255,255,.9),0 1px 3px rgba(0,0,0,.6)}
+.wh .sel{background:rgba(255,255,255,.42);box-shadow:0 0 16px rgba(255,255,255,.35),inset 0 1px 1px rgba(255,255,255,.8)}
+.sc{flex:1;overflow-y:auto;border-radius:18px;background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.25)}
+.sc::-webkit-scrollbar{width:8px}.sc::-webkit-scrollbar-thumb{background:rgba(255,255,255,.3);border-radius:8px}
+.grid{height:calc(24*var(--h))}
+.hrs{position:relative;font-size:.68em;opacity:.7}
+.hrs span{position:absolute;right:6px;translate:0 -50%}
+.col{position:relative;border-left:1px solid rgba(255,255,255,.12);cursor:crosshair;
+ background:repeating-linear-gradient(to bottom,rgba(255,255,255,.13) 0 1px,transparent 1px var(--h))}
+.col.today{background-color:rgba(255,255,255,.07)}
 @media(max-width:900px){:root{--cw:min(760px,92vw)}.wrap{flex-direction:column}#cal{height:0;transition-property:height,margin,opacity,scale,translate}.wrap.cal #cal{margin:20px 0 0;height:min(720px,85vh)}}
 </style>
 <div class=wrap id=w>
