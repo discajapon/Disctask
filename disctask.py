@@ -2,6 +2,14 @@
 import gi, os
 gi.require_version('Gtk','3.0'); gi.require_version('WebKit2','4.1')
 from gi.repository import Gtk, WebKit2
+def gl_ok():  # forcing the GPU renderer aborts the app when GDK has no OpenGL, so probe first
+    t = Gtk.Window(); t.realize()
+    try: t.get_window().create_gl_context().realize(); return True
+    except Exception: return False
+    finally: t.destroy()
+# WebKitGTK falls back to CPU painting on some GPUs (NVIDIA here: ~12 fps with the glass
+# effects); force the GPU renderer. WEBKIT_FORCE_DMABUF_RENDERER=0 ./disctask.py to opt out.
+if gl_ok(): os.environ.setdefault('WEBKIT_FORCE_DMABUF_RENDERER', '1')
 d = os.path.expanduser('~/.local/share/disctask')
 ctx = WebKit2.WebContext.new_with_website_data_manager(
     WebKit2.WebsiteDataManager(base_data_directory=d, base_cache_directory=d))
