@@ -136,8 +136,12 @@ function renderCal(){
  const f=o=>new Date(o+'T12:00').toLocaleDateString('es',o==ds[6]?{day:'numeric',month:'short',year:'numeric'}:{day:'numeric',month:'short'});
  $('wl').textContent=f(ds[0])+' – '+f(ds[6]);
  $('wn').disabled=ds[6]>=MAX||undefined;
- document.querySelectorAll('.col').forEach((c,i)=>{c.dataset.d=ds[i];c.classList.toggle('today',ds[i]==today)})}
+ document.querySelectorAll('.col').forEach((c,i)=>{c.dataset.d=ds[i];c.classList.toggle('today',ds[i]==today)});
+ nowLine()}
 $('wp').onclick=()=>shift(-7);$('wn').onclick=()=>shift(7);$('wt').onclick=()=>{day=iso(new Date());render()};
+function nowLine(){document.querySelector('.now')?.remove();const n=new Date(),c=document.querySelector(`.col[data-d="${iso(n)}"]`);
+ c?.append(Object.assign(document.createElement('div'),{className:'now',style:`top:${(n.getHours()*60+n.getMinutes())*H/60}px`}))}
+setInterval(nowLine,60000);
 $('wh').onclick=e=>{const b=e.target.closest('button');if(b){day=b.dataset.d;render()}};
 render();
 $('sc').scrollTop=7*H;
