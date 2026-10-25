@@ -17,6 +17,8 @@ Needs GTK3 + WebKit2GTK (`gir1.2-webkit2-4.1`).
 
 Data is stored in `~/.local/share/disctask`.
 
+The app forces WebKit's GPU renderer when OpenGL works, since WebKitGTK may otherwise paint on the CPU and the glass effects stutter. If you see rendering glitches, run `WEBKIT_FORCE_DMABUF_RENDERER=0 ./disctask.py`.
+
 ## Font
 The UI uses Anthropic Serif. It is not in the repo (proprietary): install it system-wide, or drop the `.otf` files into `fonts/` (ignored by git). Without it the app falls back to Georgia.
 
