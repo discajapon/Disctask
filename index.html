@@ -237,7 +237,7 @@ let edit=null; // {k,isNew}
 const toMin=v=>v?+v.slice(0,2)*60+ +v.slice(3,5):0;
 function openEditor(k,isNew){edit={k,isNew};
  $('et').value=k.title;$('ed').value=k.date;$('e1').value=hm(k.start);$('e2').value=hm(k.end%1440);$('ex').value=k.desc;$('ep').innerHTML=linkify(k.desc);
- $('es').querySelector(`[value="${k.color}"]`).checked=true;
+ ($('es').querySelector(`[value="${k.color}"]`)||$('es').firstChild).checked=true; // unknown stored colour must not abort the editor
  $('dlg').returnValue='';$('dlg').showModal();$('et').focus()}
 $('dlg').onclose=()=>{const{k,isNew}=edit;
  if($('dlg').returnValue=='ok'){
