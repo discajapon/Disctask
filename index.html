@@ -72,7 +72,7 @@ main>header{display:flex;align-items:center;justify-content:space-between;gap:8p
 .wh .sel{background:rgba(255,255,255,.42);box-shadow:0 0 16px rgba(255,255,255,.35),inset 0 1px 1px rgba(255,255,255,.8)}
 .sc{flex:1;overflow-y:auto;border-radius:18px;background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.25)}
 .sc::-webkit-scrollbar{width:8px}.sc::-webkit-scrollbar-thumb{background:rgba(255,255,255,.3);border-radius:8px}
-.grid{height:calc(24*var(--h))}
+.grid{position:relative;height:calc(24*var(--h))}
 .hrs{position:relative;font-size:.68em;opacity:.7}
 .hrs span{position:absolute;right:6px;translate:0 -50%}
 .col{position:relative;border-left:1px solid rgba(255,255,255,.12);cursor:crosshair;
@@ -94,6 +94,8 @@ main>header{display:flex;align-items:center;justify-content:space-between;gap:8p
 #ep{margin:-4px 0 0;padding:0 4px;font-size:.9em;white-space:pre-wrap;overflow-wrap:anywhere;max-height:30vh;overflow:auto}
 #ep:empty{display:none}
 .ev.drag{cursor:grabbing;scale:1.04;z-index:5;filter:brightness(1.15);box-shadow:inset 0 1px 1px rgba(255,255,255,.7),0 14px 30px rgba(0,0,0,.45),0 0 22px rgba(var(--c),.7)}
+.sp{position:absolute;z-index:4;pointer-events:none;padding:4px 7px;border-radius:12px;font-size:.74em;font-weight:600;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
+ background:rgba(var(--c),.35);border:2px dashed rgba(var(--c),1);box-shadow:0 0 18px rgba(var(--c),.6),inset 0 1px 1px rgba(255,255,255,.6)}
 .ev i{position:absolute;left:0;right:0;height:8px;cursor:ns-resize;z-index:1}
 .ev .rt{top:0}.ev .rb{bottom:0}
 .ev .rl,.ev .rr{top:8px;bottom:8px;height:auto;width:8px;cursor:ew-resize}
@@ -230,7 +232,7 @@ $('g').onpointerdown=e=>{
  const c=e.target.closest('.col'),el=e.target.closest('.ev');
  if(e.button||!c||e.target.closest('a'))return;
  if(el){const k=ev.find(k=>k.id==el.dataset.id);
-  drag={k,mode:{rt:'top',rb:'bot'}[e.target.className]||'move',x0:e.clientX,y0:e.clientY,s0:k.start,e0:k.end};return}
+  drag={k,mode:{rt:'top',rb:'bot',rl:'span',rr:'span'}[e.target.className]||'move',x0:e.clientX,y0:e.clientY,s0:k.start,e0:k.end};return}
  if(e.target!=c)return;
  const s=Math.min(Math.floor((e.clientY-$('g').getBoundingClientRect().top)*4/H)*15,1425);
  const k={id:uid(),date:c.dataset.d,start:s,end:s+15,title:'',color:localStorage['disctask-color']||COLORS.Lavanda,desc:''};
@@ -261,6 +263,8 @@ addEventListener('pointermove',e=>{if(!drag)return;const{k}=drag;
  if(drag.mode=='new'){k.start=Math.min(drag.s0,m);k.end=Math.max(drag.s0+15,m);if(k.end-k.start<15)k.start=k.end-15}
  else if(drag.mode=='top')k.start=clamp(snap(drag.s0+(e.clientY-drag.y0)*60/H),0,k.end-15);
  else if(drag.mode=='bot')k.end=clamp(snap(drag.e0+(e.clientY-drag.y0)*60/H),k.start+15,1440);
+ else if(drag.mode=='span'){const cols=[...document.querySelectorAll('.col')],o=cols.findIndex(c=>c.dataset.d==k.date),t=colIdx(e.clientX);
+  drag.span=[Math.min(o,t),Math.max(o,t)];showPreview(k,...drag.span,k.title||'(sin título)')}
  else{const dy=snap((e.clientY-drag.y0)*60/H),len=drag.e0-drag.s0;
   k.start=clamp(drag.s0+dy,0,1440-len);k.end=k.start+len;
   const to=[...document.querySelectorAll('.col')].find(c=>{const r=c.getBoundingClientRect();return e.clientX>=r.left&&e.clientX<r.right});
@@ -268,7 +272,16 @@ addEventListener('pointermove',e=>{if(!drag)return;const{k}=drag;
  document.querySelector(`.ev[data-id="${k.id}"]`)?.classList.add('drag');
  renderEv()});
 addEventListener('pointerup',end);addEventListener('pointercancel',()=>end(true));addEventListener('blur',()=>end(true));
-function end(cancel){if(!drag)return;const{k,mode,moved}=drag;drag=null;
+const colIdx=x=>{const cols=[...document.querySelectorAll('.col')];const i=cols.findIndex(c=>{const r=c.getBoundingClientRect();return x>=r.left&&x<r.right});
+ return i<0?(x<cols[0].getBoundingClientRect().left?0:cols.length-1):i};
+const sp=Object.assign(document.createElement('div'),{className:'sp'}); // dashed preview of where a box will land
+function showPreview(k,a,b,title){const cols=[...document.querySelectorAll('.col')],g=$('g').getBoundingClientRect(),l=cols[a].getBoundingClientRect(),r=cols[b].getBoundingClientRect();
+ sp.style.cssText=`left:${l.left-g.left+3}px;width:${r.right-l.left-6}px;top:${k.start*H/60}px;height:${(k.end-k.start)*H/60}px;--c:${k.color}`;
+ sp.textContent=title;if(!sp.isConnected)$('g').append(sp)}
+function splitSpan(k,[a,b]){[...document.querySelectorAll('.col')].slice(a,b+1).forEach(c=>{ // a box stretched over several days becomes one box per day
+ if(c.dataset.d!=k.date&&c.dataset.d<=MAX)ev.push({...k,id:uid(),date:c.dataset.d})})}
+function end(cancel){if(!drag)return;const{k,mode,moved,span}=drag;drag=null;
+ sp.remove();if(mode=='span'&&moved&&span&&cancel!==true)splitSpan(k,span);
  if(mode=='new'&&!moved)k.end=Math.min(k.start+60,1440);
  document.querySelector('.ev.drag')?.classList.remove('drag');
  saveEv();renderEv();
