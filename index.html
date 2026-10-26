@@ -117,6 +117,7 @@ dialog::backdrop{background:rgba(15,8,40,.35);backdrop-filter:blur(3px)}
 #es input:checked{scale:1.2;box-shadow:inset 0 2px 2px rgba(255,255,255,.8),0 0 0 2px #fff,0 0 16px rgba(var(--c),.9)}
 #ex{resize:vertical;min-height:80px}
 #ef input[type=time]{flex:1}
+html.idle *,html.idle *::before,html.idle *::after{animation-play-state:paused!important} /* no frames while nobody is looking */
 @media(max-width:900px){:root{--cw:min(760px,92vw)}.wrap{flex-direction:column}#cal{height:0;transition-property:height,margin,opacity,scale,translate}.wrap.cal #cal{margin:20px 0 0;height:min(720px,85vh)}}
 </style>
 <div class=wrap id=w>
@@ -265,6 +266,12 @@ const calOpen=o=>{$('w').classList.toggle('cal',o);$('cb').classList.toggle('on'
  window.webkit?.messageHandlers?.win?.postMessage(o?'wide':'narrow')};
 $('cb').onclick=()=>calOpen(!$('w').classList.contains('cal'));
 calOpen(!!localStorage['disctask-calopen']);
+let idleT; // pause the endless animations after 20 s without input or when unfocused: every frame costs a leaked fd
+const wake=()=>{document.documentElement.classList.remove('idle');clearTimeout(idleT);idleT=setTimeout(()=>document.documentElement.classList.add('idle'),20000)};
+['pointermove','pointerdown','keydown','focus'].forEach(t=>addEventListener(t,wake,true));
+addEventListener('blur',()=>{clearTimeout(idleT);document.documentElement.classList.add('idle')});
+document.addEventListener('visibilitychange',()=>document.hidden?document.documentElement.classList.add('idle'):wake());
+wake();
 const g=document.querySelector('.glass');
 g.onmousemove=e=>{const r=g.getBoundingClientRect();g.style.setProperty('--mx',e.clientX-r.left+'px');g.style.setProperty('--my',e.clientY-r.top+'px')};
 </script>
