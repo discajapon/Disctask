@@ -64,7 +64,7 @@ def drag_phase():
             check('stretching shows a preview, then splits into one box per day', o2['preview'] and not o2['sp'] and o2['days'] == ['2026-10-27', '2026-10-28', '2026-10-29'], o2)
             check('split boxes keep time and title and get unique ids', o2['same'] and o2['ids'] == 3, o2)
         js(SPAN, b)
-    js(DRAG, lambda r: at(1300, lambda: js(DRAG2, a)))
+    js(DRAG, lambda r: at(2200, lambda: js(DRAG2, a)))
 def phase2():
     def got(r):
         o = json.loads(r)
