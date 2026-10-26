@@ -194,6 +194,7 @@ $('wp').onclick=()=>shift(-7);$('wn').onclick=()=>shift(7);$('wt').onclick=()=>{
 let ev=load('disctask-cal',[],Array.isArray).filter(k=>k&&typeof k.date=='string'&&Number.isFinite(k.start)&&Number.isFinite(k.end)&&k.end>k.start)
  .map(k=>({id:String(k.id??Math.random().toString(36).slice(2)),date:k.date,start:k.start,end:Math.min(k.end,1440),title:String(k.title??''),color:String(k.color??''),desc:String(k.desc??'')}));
 const saveEv=()=>put('disctask-cal',ev);
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const hm=m=>String(m/60|0).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
 const esc=s=>s.replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
 const linkify=s=>s.split(/((?:https?:\/\/|\bwww\.)\S*[^\s.,;:!?)\]'"])/i).map((p,i)=>i%2
@@ -228,7 +229,7 @@ $('g').onpointerdown=e=>{
   drag={k,mode:{rt:'top',rb:'bot'}[e.target.className]||'move',x0:e.clientX,y0:e.clientY,s0:k.start,e0:k.end};return}
  if(e.target!=c)return;
  const s=Math.min(Math.floor((e.clientY-$('g').getBoundingClientRect().top)*4/H)*15,1425);
- const k={id:Date.now().toString(36),date:c.dataset.d,start:s,end:s+15,title:'',color:localStorage['disctask-color']||COLORS.Lavanda,desc:''};
+ const k={id:uid(),date:c.dataset.d,start:s,end:s+15,title:'',color:localStorage['disctask-color']||COLORS.Lavanda,desc:''};
  ev.push(k);drag={k,mode:'new',x0:e.clientX,y0:e.clientY,s0:s,e0:s+15};renderEv()};
 const COLORS={Lavanda:'167,139,250',Cielo:'96,165,250',Turquesa:'34,211,238',Menta:'52,211,153',Lima:'163,230,53',
  Ámbar:'251,191,36',Coral:'251,113,133',Rosa:'244,114,182',Niebla:'203,213,225'};
