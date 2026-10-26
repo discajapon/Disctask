@@ -35,6 +35,7 @@ def policy(v, dec, kind):  # web links open in the default browser, not inside t
             return True
     return False
 v.connect('decide-policy', policy)
+v.connect('web-process-terminated', lambda v, why: v.reload())  # data lives in localStorage, a reload loses nothing
 v.load_uri('file://' + os.path.join(os.path.dirname(os.path.realpath(__file__)), 'index.html'))
 w = Gtk.Window(title='Disctask', default_width=520, default_height=640)
 w.set_icon_from_file(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'icon.png'))
