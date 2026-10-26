@@ -262,11 +262,13 @@ addEventListener('pointermove',e=>{if(!drag)return;const{k}=drag;
   if(to)k.date=to.dataset.d}
  document.querySelector(`.ev[data-id="${k.id}"]`)?.classList.add('drag');
  renderEv()});
-addEventListener('pointerup',()=>{if(!drag)return;const{k,mode,moved}=drag;drag=null;
+addEventListener('pointerup',end);addEventListener('pointercancel',()=>end(true));addEventListener('blur',()=>end(true));
+function end(cancel){if(!drag)return;const{k,mode,moved}=drag;drag=null;
  if(mode=='new'&&!moved)k.end=Math.min(k.start+60,1440);
  document.querySelector('.ev.drag')?.classList.remove('drag');
  saveEv();renderEv();
- if(mode=='new')openEditor(k,true);else if(!moved)openEditor(k,false)});
+ if(cancel===true)return; // a drag the OS interrupted keeps its last position and opens nothing
+ if(mode=='new')openEditor(k,true);else if(!moved)openEditor(k,false)}
 $('wh').onclick=e=>{const b=e.target.closest('button');if(b){day=b.dataset.d;render()}};
 render();
 $('sc').scrollTop=7*H;
