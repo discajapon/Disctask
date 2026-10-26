@@ -11,7 +11,7 @@ def gl_ok():  # forcing the GPU renderer aborts the app when GDK has no OpenGL, 
 # WebKitGTK falls back to CPU painting on some GPUs (NVIDIA here: ~12 fps with the glass
 # effects); force the GPU renderer. WEBKIT_FORCE_DMABUF_RENDERER=0 ./disctask.py to opt out.
 if gl_ok(): os.environ.setdefault('WEBKIT_FORCE_DMABUF_RENDERER', '1')
-d = os.path.expanduser('~/.local/share/disctask')
+d = os.environ.get('DISCTASK_DATA') or os.path.expanduser('~/.local/share/disctask')  # override for tests
 ctx = WebKit2.WebContext.new_with_website_data_manager(
     WebKit2.WebsiteDataManager(base_data_directory=d, base_cache_directory=d))
 def save(dl, name):  # exports land in ~/Downloads, never overwriting
