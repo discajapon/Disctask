@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
-import gi, os
+import gi, os, resource
 gi.require_version('Gtk','3.0'); gi.require_version('WebKit2','4.1')
 from gi.repository import Gtk, WebKit2, GLib
+# WebKit's forced GPU renderer leaks one sync_file fd per presented frame (~15/s while
+# animating); at the default 1024 limit the web process wedges at 100% CPU. Children inherit this.
+soft, hard = resource.getrlimit(resource.RLIMIT_NOFILE)
+resource.setrlimit(resource.RLIMIT_NOFILE, (hard, hard))
 GLib.set_prgname('disctask')  # Wayland app id; must match disctask.desktop for the dock icon
 def gl_ok():  # forcing the GPU renderer aborts the app when GDK has no OpenGL, so probe first
     t = Gtk.Window(); t.realize()
