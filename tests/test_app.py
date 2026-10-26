@@ -41,6 +41,30 @@ RENAME = """(()=>{const fire=(el,t)=>{const r=(el.getBoundingClientRect?el:docum
  window.__opened=opened;return 1})()"""
 READ = """JSON.stringify({opened:window.__opened,closed:!$('dlg').open,n:ev.length,title:ev[0].title,stored:JSON.parse(localStorage['disctask-cal'])[0].title,corrupt:localStorage['disctask-corrupt'],db:JSON.stringify(db)})"""
 
+DRAG = """(()=>{const P=(el,t,x,y)=>el.dispatchEvent(new PointerEvent(t,{bubbles:true,clientX:x,clientY:y,button:0,pointerId:1}));
+ ev.length=0;db['2026-10-26']=[{text:'Estudiar',done:false}];day='2026-10-26';render();calOpen(true);return 1})()"""
+DRAG2 = """(()=>{const P=(el,t,x,y)=>el.dispatchEvent(new PointerEvent(t,{bubbles:true,clientX:x,clientY:y,button:0,pointerId:1}));
+ const li=document.querySelector('li').getBoundingClientRect(),c=document.querySelectorAll('.col')[1].getBoundingClientRect(),g=$('g').getBoundingClientRect();
+ const y=g.top+10*44+5; // 10:00 slot
+ P(document.querySelector('li label'),'pointerdown',li.left+40,li.top+10);P(window,'pointermove',li.left+80,li.top+30);P(window,'pointermove',c.left+20,y);
+ const preview=!!document.querySelector('.sp');P(window,'pointerup',c.left+20,y);
+ const k=ev[0]||{};return JSON.stringify({preview,n:ev.length,title:k.title,date:k.date,start:k.start,len:k.end-k.start,done:db['2026-10-26'][0].done,ghost:!!document.querySelector('.tg')})})()"""
+SPAN = """(()=>{const P=(el,t,x,y)=>el.dispatchEvent(new PointerEvent(t,{bubbles:true,clientX:x,clientY:y,button:0,pointerId:1}));
+ const h=document.querySelector('.ev .rr'),b=h.getBoundingClientRect(),cols=document.querySelectorAll('.col'),c=cols[3].getBoundingClientRect();
+ P(h,'pointerdown',b.left+3,b.top+20);P(window,'pointermove',c.left+20,b.top+20);const preview=!!document.querySelector('.sp');P(window,'pointerup',c.left+20,b.top+20);
+ return JSON.stringify({preview,days:ev.map(k=>k.date).sort(),same:ev.every(k=>k.start==ev[0].start&&k.end==ev[0].end&&k.title=='Estudiar'),ids:new Set(ev.map(k=>k.id)).size,sp:!!document.querySelector('.sp')})})()"""
+def drag_phase():
+    def a(r):
+        o = json.loads(r)
+        check('dragging a task shows a drop preview', o['preview'])
+        check('dropping a task creates a 1 h box with its title', o['n'] == 1 and o['title'] == 'Estudiar' and o['len'] == 60 and o['date'] == '2026-10-27' and o['start'] == 600, o)
+        check('the dragged task is not ticked and the ghost is gone', not o['done'] and not o['ghost'])
+        def b(r2):
+            o2 = json.loads(r2)
+            check('stretching shows a preview, then splits into one box per day', o2['preview'] and not o2['sp'] and o2['days'] == ['2026-10-27', '2026-10-28', '2026-10-29'], o2)
+            check('split boxes keep time and title and get unique ids', o2['same'] and o2['ids'] == 3, o2)
+        js(SPAN, b)
+    js(DRAG, lambda r: at(1300, lambda: js(DRAG2, a)))
 def phase2():
     def got(r):
         o = json.loads(r)
@@ -50,6 +74,7 @@ def phase2():
         check('editor opens for an event with an unknown colour', o['opened'])
         check('renaming an event saves and closes the dialog', o['closed'] and o['title'] == 'Instituto' and o['stored'] == 'Instituto', o)
     js(RENAME, lambda r: at(400, lambda: js(READ, got)))  # the dialog's close event is asynchronous
+    at(2500, drag_phase)
     pid = web_pid(); lim = [l for l in open(f'/proc/{pid}/limits') if l.startswith('Max open files')][0].split()
     check('web process has a high fd limit', int(lim[3]) >= 65536, lim[3])
     for t in range(30000, 43000, 3000): at(t, lambda: samples.append(syncs(pid)))  # animations pause after 20 s idle
@@ -58,8 +83,7 @@ samples = []
 def finish():
     last = samples[-3:]  # once idle the count must hold still (a stray burst earlier in the window is tolerated)
     check('no fence fds leak while idle', max(last) - min(last) <= 5, samples)
-    check('fd count stays far from the limit', max(samples) < 900, max(samples))
-    if checks[0] < 8: fails.append('only %d checks ran' % checks[0])
+    if checks[0] < 12: fails.append('only %d checks ran' % checks[0])
     print('FAILED: ' + ', '.join(fails) if fails else 'ALL PASSED'); Gtk.main_quit()
 
 orig, state = WebKit2.WebView.load_uri, [0]

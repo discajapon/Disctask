@@ -271,7 +271,7 @@ addEventListener('pointermove',e=>{if(!drag)return;const{k}=drag;
  else if(drag.mode=='top')k.start=clamp(snap(drag.s0+(e.clientY-drag.y0)*60/H),0,k.end-15);
  else if(drag.mode=='bot')k.end=clamp(snap(drag.e0+(e.clientY-drag.y0)*60/H),k.start+15,1440);
  else if(drag.mode=='span'){const cols=[...document.querySelectorAll('.col')],o=cols.findIndex(c=>c.dataset.d==k.date),t=colIdx(e.clientX);
-  drag.span=[Math.min(o,t),Math.max(o,t)];showPreview(k,...drag.span,k.title||'(sin título)')}
+  drag.span=[Math.min(o,t),Math.max(o,t)];showPreview(k,...drag.span,'')}
  else{const dy=snap((e.clientY-drag.y0)*60/H),len=drag.e0-drag.s0;
   k.start=clamp(drag.s0+dy,0,1440-len);k.end=k.start+len;
   const to=[...document.querySelectorAll('.col')].find(c=>{const r=c.getBoundingClientRect();return e.clientX>=r.left&&e.clientX<r.right});
