@@ -145,8 +145,15 @@ html.idle *,html.idle *::before,html.idle *::after{animation-play-state:paused!i
 <script>
 const $=i=>document.getElementById(i);
 let day=new Date().toLocaleDateString('sv'); // YYYY-MM-DD local
-let db={};try{db=JSON.parse(localStorage.disctask||'{}')}catch{}
-const save=()=>localStorage.disctask=JSON.stringify(db);
+const load=(k,empty,ok)=>{const raw=localStorage[k];if(!raw)return empty;
+ try{const v=JSON.parse(raw);if(ok(v))return v}catch{}
+ try{localStorage[k+'-corrupt']=raw}catch{} // never overwrite unreadable data without keeping a copy
+ return empty};
+const put=(k,v)=>{try{localStorage[k]=JSON.stringify(v)}catch(e){console.error('save failed',e)}};
+const plain=v=>v&&typeof v=='object'&&!Array.isArray(v);
+let db=load('disctask',{},plain);
+for(const d in db)if(!Array.isArray(db[d]))delete db[d];
+const save=()=>put('disctask',db);
 const MAX='2040-12-31';
 const shift=(n,y)=>{const x=new Date(day+'T12:00');y?x.setFullYear(x.getFullYear()+n):x.setDate(x.getDate()+n);
  const v=x.toLocaleDateString('sv');if(v<=MAX){day=v;render()}};
@@ -184,8 +191,9 @@ function renderCal(){
  document.querySelectorAll('.col').forEach((c,i)=>{c.dataset.d=ds[i];c.classList.toggle('today',ds[i]==today)});
  nowLine();renderEv()}
 $('wp').onclick=()=>shift(-7);$('wn').onclick=()=>shift(7);$('wt').onclick=()=>{day=iso(new Date());render()};
-let ev=[];try{ev=JSON.parse(localStorage['disctask-cal']||'[]')}catch{}
-const saveEv=()=>localStorage['disctask-cal']=JSON.stringify(ev);
+let ev=load('disctask-cal',[],Array.isArray).filter(k=>k&&typeof k.date=='string'&&Number.isFinite(k.start)&&Number.isFinite(k.end)&&k.end>k.start)
+ .map(k=>({id:String(k.id??Math.random().toString(36).slice(2)),date:k.date,start:k.start,end:Math.min(k.end,1440),title:String(k.title??''),color:String(k.color??''),desc:String(k.desc??'')}));
+const saveEv=()=>put('disctask-cal',ev);
 const hm=m=>String(m/60|0).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
 const esc=s=>s.replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
 const linkify=s=>s.split(/((?:https?:\/\/|\bwww\.)\S*[^\s.,;:!?)\]'"])/i).map((p,i)=>i%2
