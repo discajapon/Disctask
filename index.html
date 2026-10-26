@@ -38,6 +38,12 @@ input::placeholder{color:rgba(255,255,255,.6)}
 li{list-style:none;display:flex;align-items:center;gap:10px;padding:10px 14px;margin-bottom:8px;border-radius:18px;
  background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.3);animation:pop .4s cubic-bezier(.34,1.56,.64,1);transition:transform .25s,background .25s}
 li:hover{transform:translateX(4px);background:rgba(255,255,255,.18)}
+li{user-select:none;-webkit-user-select:none;cursor:grab}
+li.lift{opacity:.45}
+.tg{position:fixed;z-index:20;pointer-events:none;max-width:260px;padding:8px 14px;border-radius:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+ background:linear-gradient(135deg,rgba(255,255,255,.45),rgba(255,255,255,.18));border:1px solid rgba(255,255,255,.75);
+ backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 12px 30px rgba(0,0,0,.4),inset 0 1px 1px rgba(255,255,255,.8);
+ text-shadow:0 1px 3px rgba(0,0,0,.6);rotate:-2deg;scale:1.04}
 li label{flex:1;cursor:pointer}
 li label{transition:opacity .3s}
 li.done label{text-decoration:line-through;opacity:.6}
@@ -171,6 +177,7 @@ function render(){
  a.forEach((k,i)=>{const li=document.createElement('li');li.className=k.done?'done':'';
   li.innerHTML='<input type=checkbox id=c'+i+'><label for=c'+i+'></label><button class=x>✕</button>';
   li.querySelector('label').textContent=k.text;
+  li.onpointerdown=e=>taskDown(e,k,li);
   const c=li.querySelector('input');c.checked=k.done;
   c.onchange=()=>{k.done=c.checked;save();render()};
   li.querySelector('.x').onclick=()=>{a.splice(i,1);save();render()};
@@ -287,6 +294,27 @@ function end(cancel){if(!drag)return;const{k,mode,moved,span}=drag;drag=null;
  saveEv();renderEv();
  if(cancel===true)return; // a drag the OS interrupted keeps its last position and opens nothing
  if(mode=='new')openEditor(k,true);else if(!moved)openEditor(k,false)}
+// drag a task from the list onto the calendar: drops a 1 h box titled like the task
+const color=()=>Object.values(COLORS).includes(localStorage['disctask-color'])?localStorage['disctask-color']:COLORS.Lavanda;
+let td=null; // {t, li, x0, y0, on, ghost}
+const taskDown=(e,t,li)=>{if(!e.button&&!e.target.closest('input,button'))td={t,li,x0:e.clientX,y0:e.clientY,on:false}};
+function dropAt(e){if(!$('w').classList.contains('cal'))return;const s=$('sc').getBoundingClientRect(),c=[...document.querySelectorAll('.col')],f=c[0].getBoundingClientRect();
+ if(e.clientX<f.left||e.clientX>=s.right||e.clientY<s.top||e.clientY>=s.bottom)return;
+ return{i:colIdx(e.clientX),s:clamp(Math.floor((e.clientY-$('g').getBoundingClientRect().top)*4/H)*15,0,1380)}}
+addEventListener('pointermove',e=>{if(!td)return;
+ if(!td.on){if(Math.abs(e.clientX-td.x0)+Math.abs(e.clientY-td.y0)<6)return;
+  td.on=true;td.li.classList.add('lift');td.ghost=Object.assign(document.createElement('div'),{className:'tg',textContent:td.t.text});document.body.append(td.ghost)}
+ td.ghost.style.left=e.clientX+12+'px';td.ghost.style.top=e.clientY+8+'px';
+ const at=dropAt(e);at?showPreview({start:at.s,end:at.s+60,color:color()},at.i,at.i,td.t.text):sp.remove();
+ const r=$('sc').getBoundingClientRect(); // scroll while hovering the top/bottom edge
+ if(e.clientY>r.top-40&&e.clientY<r.top+30)$('sc').scrollTop-=10;else if(e.clientY>r.bottom-30&&e.clientY<r.bottom+40)$('sc').scrollTop+=10});
+function taskEnd(e){if(!td)return;const{t,li,on,ghost}=td;td=null;if(!on)return;
+ ghost.remove();sp.remove();li.classList.remove('lift');
+ const stop=x=>{x.preventDefault();x.stopPropagation()}; // the click that follows a drag must not tick the checkbox
+ addEventListener('click',stop,true);setTimeout(()=>removeEventListener('click',stop,true),80);
+ const at=e&&dropAt(e),d=at&&document.querySelectorAll('.col')[at.i].dataset.d;
+ if(at&&d<=MAX){ev.push({id:uid(),date:d,start:at.s,end:at.s+60,title:t.text,color:color(),desc:''});saveEv();renderEv()}}
+addEventListener('pointerup',taskEnd);addEventListener('pointercancel',()=>taskEnd());addEventListener('blur',()=>taskEnd());
 $('wh').onclick=e=>{const b=e.target.closest('button');if(b){day=b.dataset.d;render()}};
 render();
 $('sc').scrollTop=7*H;
