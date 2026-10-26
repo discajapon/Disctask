@@ -241,7 +241,7 @@ function openEditor(k,isNew){edit={k,isNew};
  $('dlg').returnValue='';$('dlg').showModal();$('et').focus()}
 $('dlg').onclose=()=>{const{k,isNew}=edit;
  if($('dlg').returnValue=='ok'){
-  k.title=$('et').value.trim();k.color=localStorage['disctask-color']=$('es').querySelector(':checked').value;k.desc=$('ex').value.trim();k.date=$('ed').value||k.date;
+  k.title=$('et').value.trim();k.color=localStorage['disctask-color']=$('es').querySelector(':checked').value;k.desc=$('ex').value.trim();k.date=/^\d{4}-\d\d-\d\d$/.test($('ed').value)?$('ed').value.slice(0,10)<=MAX?$('ed').value:MAX:k.date; // year 275760 is typeable
   k.start=Math.min(toMin($('e1').value),1425);k.end=toMin($('e2').value)||1440; // 00:00 as end = midnight
   if(k.end<=k.start)k.end=Math.min(k.start+60,1440);
   if(k.date!=day&&!week().includes(k.date)){day=k.date;render()} // follow it to its week
