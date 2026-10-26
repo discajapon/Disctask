@@ -9,6 +9,8 @@ The 🗓 button opens a weekly schedule next to the tasks (the window widens to 
 - Drag an event to move it to another hour or day; drag its top or bottom edge to make it longer or shorter.
 - Click an event to edit its title, translucent color, date, times and description. Links in the description (`https://…`, `www.…`) are clickable and open in your browser.
 - Overlapping events sit side by side.
+- Drag a task from the list onto the calendar to drop a 1 h box titled like the task (the task stays in the list and is not ticked). The calendar must be open; hover the top or bottom edge while dragging to scroll.
+- Drag the left or right edge of a box across other days: a dashed band shows the span, and on release it splits into one box per day with the same hours, title, colour and description.
 
 ## Run
 Needs GTK3 + WebKit2GTK (`gir1.2-webkit2-4.1`).
