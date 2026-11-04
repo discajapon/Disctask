@@ -21,4 +21,16 @@ async def main():
         assert not e.content, e
         e = await s.call_tool('list_events', {})
         assert json.loads(e.content[0].text)['title'] == 'x', e
+        await s.call_tool('add_task', {'date': '2026-01-03', 'text': 'n'})
+        await s.call_tool('update_task', {'date': '2026-01-02', 'index': 0, 'done': False})
+        await s.call_tool('delete_task', {'date': '2026-01-02', 'index': 0})
+        await s.call_tool('add_event', {'date': '2026-01-03', 'start': 0, 'end': 30, 'title': 'y'})
+        await s.call_tool('update_event', {'id': 'a', 'title': 'z'})
+        await s.call_tool('delete_event', {'id': 'a'})
+        for name, args in [('add_task', {'date': 'mañana', 'text': 'x'}), ('delete_task', {'date': '2026-01-02', 'index': 5}),
+                           ('update_event', {'id': 'nope', 'title': 'x'}), ('delete_event', {'id': 'nope'})]:
+            assert (await s.call_tool(name, args)).isError, name  # rejected, nothing queued
+    ops = [json.loads(l) for l in open(d + '/inbox.jsonl')]
+    assert [o['op'] for o in ops] == ['add_task', 'update_task', 'delete_task', 'add_event', 'update_event', 'delete_event'], ops
+    assert ops[4]['fields'] == {'title': 'z'} and ops[1]['text'] is None, ops
 asyncio.run(main()); print('ok')
