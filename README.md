@@ -30,7 +30,7 @@ Everything is local: no network access, fonts and wallpaper are bundled. Tasks a
 `python3 tests/test_app.py` runs the real app on a throwaway data dir (needs a display, ~50 s). `DISCTASK_DATA=<dir>` points the app at any data dir.
 
 ## MCP (Claude Desktop and Claude Code)
-`mcp_server.py` lets Claude read your tasks and calendar events (`list_tasks`, `list_events`, optional `date`). It is read-only: the open app keeps its data in memory and would overwrite outside writes. Needs `pip install mcp`.
+`mcp_server.py` lets Claude read and edit your tasks and calendar events: `list_tasks`, `list_events` (optional `date`), `add_task`, `update_task`, `delete_task`, `add_event`, `update_event`, `delete_event`. Edits are not written to the app's database (the open app keeps its data in memory and would overwrite them): they are queued in `inbox.jsonl` in the data dir, and the app applies them within a second (or at next launch if it is closed). Reads come from the database, so they can lag a moment behind. Needs `pip install mcp`.
 
     claude mcp add disctask --scope user -- python3 /path/to/Disctask/mcp_server.py
 
