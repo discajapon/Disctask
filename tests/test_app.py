@@ -64,7 +64,18 @@ def drag_phase():
             check('stretching shows a preview, then splits into one box per day', o2['preview'] and not o2['sp'] and o2['days'] == ['2026-10-27', '2026-10-28', '2026-10-29'], o2)
             check('split boxes keep time and title and get unique ids', o2['same'] and o2['ids'] == 3, o2)
         js(SPAN, b)
+        at(1500, inbox_phase)
     js(DRAG, lambda r: at(2200, lambda: js(DRAG2, a)))
+OPS = [{'op': 'add_task', 'date': '2026-10-26', 'text': 'Nueva', 'done': False}, {'op': 'update_task', 'date': '2026-10-26', 'index': 0, 'done': True},
+       {'op': 'add_event', 'event': {'date': '2026-10-26', 'start': 60, 'end': 120, 'title': 'MCP'}}]
+INBOX = "JSON.stringify({tasks:db['2026-10-26'],mcp:ev.filter(k=>k.title=='MCP').length,stored:localStorage['disctask'].includes('Nueva')})"
+def inbox_phase():  # what mcp_server.py leaves behind: the app must drain it and apply it to its own state
+    with open(os.environ['DISCTASK_DATA'] + '/inbox.jsonl', 'w') as f: f.write('\n'.join(map(json.dumps, OPS)) + '\nnot json\n')
+    def got(r):
+        o = json.loads(r)
+        check('queued edits are applied to tasks and events', o['tasks'] == [{'text': 'Estudiar', 'done': True}, {'text': 'Nueva', 'done': False}] and o['mcp'] == 1, o)
+        check('applied edits are saved and the inbox is emptied', o['stored'] and not os.path.exists(os.environ['DISCTASK_DATA'] + '/inbox.jsonl'))
+    at(2200, lambda: js(INBOX, got))
 def phase2():
     def got(r):
         o = json.loads(r)
@@ -83,7 +94,7 @@ samples = []
 def finish():
     last = samples[-3:]  # once idle the count must hold still (a stray burst earlier in the window is tolerated)
     check('no fence fds leak while idle', max(last) - min(last) <= 5, samples)
-    if checks[0] < 12: fails.append('only %d checks ran' % checks[0])
+    if checks[0] < 14: fails.append('only %d checks ran' % checks[0])
     print('FAILED: ' + ', '.join(fails) if fails else 'ALL PASSED'); Gtk.main_quit()
 
 orig, state = WebKit2.WebView.load_uri, [0]

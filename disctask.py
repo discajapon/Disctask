@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import gi, os, resource
+import gi, json, os, resource
 gi.require_version('Gtk','3.0'); gi.require_version('WebKit2','4.1')
 from gi.repository import Gtk, WebKit2, GLib
 # WebKit's forced GPU renderer leaks one sync_file fd per presented frame (~15/s while
@@ -37,6 +37,18 @@ def policy(v, dec, kind):  # web links open in the default browser, not inside t
 v.connect('decide-policy', policy)
 v.connect('web-process-terminated', lambda v, why: v.reload())  # data lives in localStorage, a reload loses nothing
 v.load_uri('file://' + os.path.join(os.path.dirname(os.path.realpath(__file__)), 'index.html'))
+inbox = os.path.join(d, 'inbox.jsonl')  # edits appended by mcp_server.py; the page applies them to its own state
+def drain():
+    if os.path.exists(inbox) and not v.is_loading():
+        os.replace(inbox, inbox + '.work')  # atomic: the server appends to a fresh file meanwhile
+        ops = []
+        for l in open(inbox + '.work'):
+            try: ops.append(json.loads(l))
+            except ValueError: pass
+        os.remove(inbox + '.work')
+        v.run_javascript('applyOps(%s)' % json.dumps(ops))
+    return True
+GLib.timeout_add(1000, drain)
 w = Gtk.Window(title='Disctask', default_width=520, default_height=640)
 w.set_icon_from_file(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'icon.png'))
 def resize(m, res):  # page asks for room when the calendar opens/closes
