@@ -35,3 +35,5 @@ Copy `disctask.desktop` to `~/.local/share/applications/` and replace `/path/to/
 
 ## Export
 The "Exportar notas" button saves all tasks and calendar events to `~/Downloads/disctask-notas.json` as `{tareas, horarios}`; an existing file is never overwritten.
+
+It have mcp integrations with claude!
