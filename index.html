@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es"><meta charset="utf-8"><title>Disctask</title>
+<html lang="es"><meta charset="utf-8"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Disctask</title>
 <style>
 @font-face{font-family:AS;src:local("Anthropic Serif Text"),url(fonts/AnthropicSerif-Text-Regular-Static.otf)}
 @font-face{font-family:AS;font-style:italic;src:local("Anthropic Serif Text Italic"),url(fonts/AnthropicSerif-Text-RegularItalic-Static.otf)}
@@ -120,6 +120,8 @@ dialog::backdrop{background:rgba(15,8,40,.35);backdrop-filter:blur(3px)}
 #ef .row,#sf .row{display:flex;align-items:center;gap:8px}
 #ef input,#ef textarea,#sf input{font:inherit;color:inherit;padding:8px 12px;border-radius:14px;border:1px solid rgba(255,255,255,.3);background:rgba(0,0,0,.25);outline:none;color-scheme:dark;transition:box-shadow .3s,background .3s}
 #ef input:focus,#ef textarea:focus,#sf input:focus{background:rgba(0,0,0,.35);box-shadow:0 0 0 2px rgba(255,255,255,.6),0 0 24px rgba(255,255,255,.35)}
+#cal .ev{touch-action:none} /* touch: events move/resize instead of scrolling the page */
+#sc{touch-action:pan-y}
 #ss{font-size:12px;padding:3px 10px;margin-left:auto}
 #et{font-size:1.2em;font-weight:600}
 #es{display:flex;flex-wrap:wrap;gap:8px}
@@ -341,8 +343,19 @@ function reconcile(){
  if(ch)saveS()}
 if(!localStorage['disctask-premigrate'])try{localStorage['disctask-premigrate']=JSON.stringify({db:localStorage['disctask']||null,cal:localStorage['disctask-cal']||null})}catch{} // raw copy from before ids existed
 let busy=false,next=0,fails=0,state='',qt;
-function status(){const n=Object.values(S.meta).filter(m=>m.dirty).length,c=cfg();
+function status(){notify();const n=Object.values(S.meta).filter(m=>m.dirty).length,c=cfg();
  $('ss').textContent=!c.token?'○ solo local':state=='auth'?'⚠ token':n?`◐ pendiente (${n})`:state=='offline'?'○ sin conexión':'● sincronizado'}
+// APK only: local reminders that work offline. Events 10 min before they start; pending tasks of each day at 08:00.
+const LN=window.Capacitor?.Plugins?.LocalNotifications;let nt;
+const nid=s=>{let h=0;for(const c of s)h=(h*31+c.charCodeAt(0))|0;return Math.abs(h)%2147483000+1};
+function notify(){if(!LN)return;clearTimeout(nt);nt=setTimeout(async()=>{try{
+ if((await LN.requestPermissions()).display!='granted')return;
+ const p=await LN.getPending();if(p.notifications.length)await LN.cancel(p);
+ const now=Date.now(),out=[],lim=now+14*864e5,at=(d,m)=>new Date(new Date(d+'T00:00').getTime()+m*6e4);
+ for(const k of ev){const w=at(k.date,k.start-10);if(w>now&&w<lim)out.push({id:nid(k.id),title:k.title||'Evento',body:hm(k.start)+' – '+hm(k.end),schedule:{at:w,allowWhileIdle:true}})}
+ for(let i=0;i<14;i++){const d=new Date();d.setDate(d.getDate()+i);const w=at(iso(d),480),n=(db[iso(d)]||[]).filter(t=>!t.done).length;
+  if(n&&w>now)out.push({id:nid('t'+iso(d)),title:'Tareas de hoy',body:n+(n>1?' pendientes':' pendiente'),schedule:{at:w,allowWhileIdle:true}})}
+ if(out.length)await LN.schedule({notifications:out.slice(0,60)})}catch(e){console.error(e)}},3000)}
 function queue(){status();clearTimeout(qt);qt=setTimeout(syncNow,2000)}
 function applyRemote(r,kind,sent){const id=r.id,m=S.meta[id];
  if(m?.dirty&&m.h!==sent[id])return false; // edited while the request was in flight: keep ours, it goes out next round
