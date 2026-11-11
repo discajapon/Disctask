@@ -1,1 +1,8 @@
 fonts/*.otf
+.env
+*.keystore
+*.jks
+*.db
+*.db-wal
+*.db-shm
+__pycache__/
