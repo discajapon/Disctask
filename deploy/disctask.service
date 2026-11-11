@@ -8,7 +8,7 @@ Group=disctask
 WorkingDirectory=/opt/disctask/app
 EnvironmentFile=/etc/disctask/env
 Environment=DISCTASK_DB=/var/lib/disctask/disctask.db
-ExecStart=/opt/disctask/venv/bin/uvicorn app:app --host 127.0.0.1 --port 8770 --proxy-headers
+ExecStart=/opt/disctask/venv/bin/uvicorn app:app --host 127.0.0.1 --port 8770 --proxy-headers --no-access-log
 Restart=on-failure
 StateDirectory=disctask
 NoNewPrivileges=true
