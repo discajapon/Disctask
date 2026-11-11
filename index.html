@@ -116,10 +116,11 @@ main>header{display:flex;align-items:center;justify-content:space-between;gap:8p
 .ev p{margin:3px 0 0;opacity:.92;white-space:pre-wrap;overflow-wrap:anywhere}
 dialog.glass{position:fixed;width:min(420px,92vw);padding:22px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.6);animation:pop .45s cubic-bezier(.34,1.56,.64,1)}
 dialog::backdrop{background:rgba(15,8,40,.35);backdrop-filter:blur(3px)}
-#ef{flex-direction:column;gap:12px;margin:0}
-#ef .row{display:flex;align-items:center;gap:8px}
-#ef input,#ef textarea{font:inherit;color:inherit;padding:8px 12px;border-radius:14px;border:1px solid rgba(255,255,255,.3);background:rgba(0,0,0,.25);outline:none;color-scheme:dark;transition:box-shadow .3s,background .3s}
-#ef input:focus,#ef textarea:focus{background:rgba(0,0,0,.35);box-shadow:0 0 0 2px rgba(255,255,255,.6),0 0 24px rgba(255,255,255,.35)}
+#ef,#sf{flex-direction:column;gap:12px;margin:0}
+#ef .row,#sf .row{display:flex;align-items:center;gap:8px}
+#ef input,#ef textarea,#sf input{font:inherit;color:inherit;padding:8px 12px;border-radius:14px;border:1px solid rgba(255,255,255,.3);background:rgba(0,0,0,.25);outline:none;color-scheme:dark;transition:box-shadow .3s,background .3s}
+#ef input:focus,#ef textarea:focus,#sf input:focus{background:rgba(0,0,0,.35);box-shadow:0 0 0 2px rgba(255,255,255,.6),0 0 24px rgba(255,255,255,.35)}
+#ss{font-size:12px;padding:3px 10px;margin-left:auto}
 #et{font-size:1.2em;font-weight:600}
 #es{display:flex;flex-wrap:wrap;gap:8px}
 #es input{appearance:none;-webkit-appearance:none;width:28px;height:28px;margin:0;border-radius:50%;cursor:pointer;
@@ -134,7 +135,7 @@ html.idle *,html.idle *::before,html.idle *::after{animation-play-state:paused!i
 </style>
 <div class=wrap id=w>
 <main class="glass">
-<header><h1>Disctask</h1><button id=cb title="Calendario">🗓</button></header>
+<header><h1>Disctask</h1><button id=ss title="Sincronización"></button><button id=cb title="Calendario">🗓</button></header>
 <nav><button id=py title="Año anterior">«</button><button id=p>‹</button><span id=d></span><button id=n>›</button><button id=ny title="Año siguiente">»</button></nav>
 <form id=f><input type=text id=t placeholder="Nueva tarea…" autofocus autocomplete=off><button>＋</button></form>
 <ul id=l></ul>
@@ -146,6 +147,11 @@ html.idle *,html.idle *::before,html.idle *::after{animation-play-state:paused!i
  <div class=sc id=sc><div class=grid id=g><div class=hrs></div></div></div>
 </div></aside>
 </div>
+<dialog id=sdlg class=glass><form method=dialog id=sf>
+ <input type=text id=su placeholder="Servidor" autocomplete=off>
+ <input type=password id=st placeholder="Token de dispositivo (vacío = solo local)" autocomplete=off>
+ <div class=row><span style=flex:1></span><button type=button id=scan>Cancelar</button><button value=ok>Guardar</button></div>
+</form></dialog>
 <dialog id=dlg class=glass><form method=dialog id=ef>
  <input type=text id=et placeholder="Título" autocomplete=off>
  <div id=es></div>
@@ -165,7 +171,7 @@ const put=(k,v)=>{try{localStorage[k]=JSON.stringify(v)}catch(e){console.error('
 const plain=v=>v&&typeof v=='object'&&!Array.isArray(v);
 let db=load('disctask',{},plain);
 for(const d in db)if(!Array.isArray(db[d]))delete db[d];
-const save=()=>put('disctask',db);
+const save=()=>{reconcile();put('disctask',db);queue()};
 const MAX='2040-12-31';
 const shift=(n,y)=>{const x=new Date(day+'T12:00');y?x.setFullYear(x.getFullYear()+n):x.setDate(x.getDate()+n);
  const v=x.toLocaleDateString('sv');if(v<=MAX){day=v;render()}};
@@ -207,8 +213,8 @@ $('wp').onclick=()=>shift(-7);$('wn').onclick=()=>shift(7);$('wt').onclick=()=>{
 const normEv=k=>k&&typeof k.date=='string'&&Number.isFinite(k.start)&&Number.isFinite(k.end)&&k.end>k.start&&
  {id:String(k.id??Math.random().toString(36).slice(2)),date:k.date,start:k.start,end:Math.min(k.end,1440),title:String(k.title??''),color:String(k.color??''),desc:String(k.desc??'')};
 let ev=load('disctask-cal',[],Array.isArray).map(normEv).filter(Boolean);
-const saveEv=()=>put('disctask-cal',ev);
-const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const saveEv=()=>{reconcile();put('disctask-cal',ev);queue()};
+const uid=()=>crypto.randomUUID?.()??Date.now().toString(36)+Math.random().toString(36).slice(2,10);
 const hm=m=>String(m/60|0).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
 const esc=s=>s.replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
 const linkify=s=>s.split(/((?:https?:\/\/|\bwww\.)\S*[^\s.,;:!?)\]'"])/i).map((p,i)=>i%2
@@ -317,6 +323,65 @@ function taskEnd(e){if(!td)return;const{t,li,on,ghost}=td;td=null;if(!on)return;
  if(at&&d<=MAX){ev.push({id:uid(),date:d,start:at.s,end:at.s+60,title:t.text,color:color(),desc:''});saveEv();renderEv()}}
 addEventListener('pointerup',taskEnd);addEventListener('pointercancel',()=>taskEnd());addEventListener('blur',()=>taskEnd());
 $('wh').onclick=e=>{const b=e.target.closest('button');if(b){day=b.dataset.d;render()}};
+// ---- sync with the VPS. Offline-first: every change is saved locally first; this only mirrors it.
+// Each task/event has a stable id and an updated_at; reconcile() diffs the state against S.meta (what was
+// last synced), marks changes dirty and turns removals into tombstones. The server keeps the newest edit per record.
+const S=load('disctask-sync',{cursor:0,meta:{}},plain);S.meta??={};
+const saveS=()=>put('disctask-sync',S);
+const cfg=()=>({url:(localStorage['disctask-server']||'https://discajapon.com/disctask').replace(/\/+$/,''),token:localStorage['disctask-token']||''});
+const evFields=k=>[k.date,k.start,k.end,k.title,k.color,k.desc],taskFields=(d,t)=>[d,t.text,t.done?1:0,t.p];
+function reconcile(){
+ const now=Date.now(),seen=new Set();let ch=false;
+ const touch=(kind,id,f)=>{seen.add(id);const h=JSON.stringify(f),m=S.meta[id];
+  if(!m||m.h!==h||m.del){S.meta[id]={kind,u:now,h,dirty:1};ch=true}};
+ for(const d in db){let top=Math.max(0,...db[d].map(t=>t.p||0)); // p = stable position within the day
+  for(const t of db[d]){t.id??=uid();t.p??=++top;touch('tasks',t.id,taskFields(d,t))}}
+ for(const k of ev)touch('events',k.id,evFields(k));
+ for(const id in S.meta){const m=S.meta[id];if(!seen.has(id)&&!m.del){m.del=1;m.u=now;m.dirty=1;ch=true}}
+ if(ch)saveS()}
+if(!localStorage['disctask-premigrate'])try{localStorage['disctask-premigrate']=JSON.stringify({db:localStorage['disctask']||null,cal:localStorage['disctask-cal']||null})}catch{} // raw copy from before ids existed
+let busy=false,next=0,fails=0,state='',qt;
+function status(){const n=Object.values(S.meta).filter(m=>m.dirty).length,c=cfg();
+ $('ss').textContent=!c.token?'○ solo local':state=='auth'?'⚠ token':n?`◐ pendiente (${n})`:state=='offline'?'○ sin conexión':'● sincronizado'}
+function queue(){status();clearTimeout(qt);qt=setTimeout(syncNow,2000)}
+function applyRemote(r,kind,sent){const id=r.id,m=S.meta[id];
+ if(m?.dirty&&m.h!==sent[id])return false; // edited while the request was in flight: keep ours, it goes out next round
+ const rec=r.deleted?null:kind=='tasks'?(r.date&&{id,text:String(r.text??''),done:!!r.done,p:r.pos??0}):normEv(r);
+ const h=rec&&JSON.stringify(kind=='tasks'?taskFields(r.date,rec):evFields(rec));
+ if(rec&&m&&m.h===h){m.u=r.updated_at;m.dirty=0;return false} // already identical: don't replace objects the UI may hold
+ for(const d in db){const i=db[d].findIndex(t=>t.id==id);if(i>=0){db[d].splice(i,1);if(!db[d].length)delete db[d]}}
+ const j=ev.findIndex(k=>k.id==id);if(j>=0)ev.splice(j,1);
+ if(!rec){delete S.meta[id];return true}
+ if(kind=='tasks'){(db[r.date]??=[]).push(rec);db[r.date].sort((a,b)=>a.p-b.p)}else ev.push(rec);
+ S.meta[id]={kind,u:r.updated_at,h,dirty:0};return true}
+async function syncNow(){
+ const c=cfg();if(busy||!c.token||Date.now()<next)return;
+ if(drag||td||$('dlg').open){qt=setTimeout(syncNow,1500);return} // never swap objects under an active drag/editor
+ busy=true;reconcile();
+ const out={tasks:[],events:[]},sent={},loc=new Map();
+ for(const d in db)for(const t of db[d])loc.set(t.id,{...t,date:d,pos:t.p});for(const k of ev)loc.set(k.id,k);
+ for(const id in S.meta){const m=S.meta[id];if(!m.dirty)continue;sent[id]=m.h;
+  out[m.kind].push({...(m.del?{}:loc.get(id)),id,updated_at:m.u,deleted:!!m.del})}
+ try{
+  const res=await fetch(c.url+'/api/sync',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+c.token},body:JSON.stringify({since:S.cursor,changes:out})});
+  if(res.status==401){state='auth';throw 0}
+  if(!res.ok)throw 0;
+  const r=await res.json();
+  if(drag||td||$('dlg').open){busy=false;qt=setTimeout(syncNow,1500);return} // started a drag meanwhile: discard, resending is idempotent
+  let ch=false;for(const x of r.tasks)ch|=applyRemote(x,'tasks',sent);for(const x of r.events)ch|=applyRemote(x,'events',sent);
+  for(const id in sent){const m=S.meta[id];if(m&&m.h===sent[id]){if(m.del)delete S.meta[id];else m.dirty=0}}
+  S.cursor=r.cursor;fails=0;state='ok';next=0;
+  put('disctask',db);put('disctask-cal',ev);saveS();if(ch)render()
+ }catch(e){fails++;next=Date.now()+Math.min(300000,5000*2**fails);if(state!='auth')state='offline'
+  qt=setTimeout(syncNow,next-Date.now()+100)} // retry with exponential backoff, 5 s up to 5 min
+ busy=false;status()}
+$('ss').onclick=()=>{$('su').value=cfg().url;$('st').value=cfg().token;$('sdlg').showModal()};
+$('scan').onclick=()=>$('sdlg').close();
+$('sdlg').onclose=()=>{if($('sdlg').returnValue!='ok')return;
+ try{localStorage['disctask-server']=$('su').value.trim();localStorage['disctask-token']=$('st').value.trim()}catch{}
+ state='';next=0;fails=0;status();syncNow()};
+addEventListener('online',()=>{next=0;state='';syncNow()});addEventListener('offline',()=>{state='offline';status()});
+setInterval(syncNow,60000);
 function applyOps(l){ // edits queued by the MCP server (mcp_server.py), drained by disctask.py
  for(const o of l){const a=db[o.date],i=ev.findIndex(k=>k.id==o.id);
   if(o.op=='add_task')(db[o.date]??=[]).push({text:String(o.text),done:!!o.done});
@@ -327,6 +392,7 @@ function applyOps(l){ // edits queued by the MCP server (mcp_server.py), drained
   else if(o.op=='delete_event'&&i>=0)ev.splice(i,1)}
  save();saveEv();render()}
 render();
+reconcile();status();syncNow();
 $('sc').scrollTop=7*H;
 const calOpen=o=>{$('w').classList.toggle('cal',o);$('cb').classList.toggle('on',o);localStorage['disctask-calopen']=o?1:'';
  window.webkit?.messageHandlers?.win?.postMessage(o?'wide':'narrow')};
