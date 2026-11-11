@@ -61,13 +61,19 @@ def changes_since(db, since):
     return out
 
 def sync(db, since, changes, now_ms=None):
-    """changes = {'tasks': [...], 'events': [...]}. Returns everything newer than `since` plus the new cursor.
+    """changes = {'tasks': [...], 'events': [...]}. Returns everything newer than `since` plus the new cursor,
+    and the winning row for any pushed record that lost, so a client that lost converges.
     Idempotent: resending the same changes is harmless."""
+    lost = {k: [] for k in COLS}
     for kind in COLS:
         for rec in changes.get(kind, []):
-            upsert(db, kind, rec, now_ms)
+            if not upsert(db, kind, rec, now_ms): lost[kind].append(str(rec['id']))
     db.commit()
-    return {'cursor': cursor(db), **changes_since(db, since)}
+    out = changes_since(db, since)
+    for kind, ids in lost.items():
+        have = {r['id'] for r in out[kind]}
+        out[kind] += [_row(db.execute(f'select * from {kind} where id=?', (i,)).fetchone()) for i in ids if i not in have]
+    return {'cursor': cursor(db), **out}
 
 def purge(db, days=90):
     cut = int((time.time() - days * 86400) * 1000)

@@ -44,4 +44,10 @@ assert merged(db)['f']['text'] == 'fixed'
 store.sync(db, 0, {'events': [dict(id='e', updated_at=2, title='renamed')]})
 e = {x['id']: x for x in store.sync(db, 0, {})['events']}['e']
 assert e['title'] == 'renamed' and e['start'] == 60 and e['date'] == '2026-11-11'
+# a client that loses gets the winner back even though its cursor is already past it
+db = store.connect()
+store.sync(db, 0, {'tasks': [task('w', 9000, 'winner')]})
+c = store.cursor(db)
+r = store.sync(db, c, {'tasks': [task('w', 100, 'loser')]})
+assert [t['text'] for t in r['tasks']] == ['winner']
 print('ok')
