@@ -10,7 +10,7 @@ U = 'http://127.0.0.1:8799'
 
 def req(path, token=None, body=None):
     r = urllib.request.Request(U + path, data=json.dumps(body).encode() if body is not None else None,
-                               headers={'Content-Type': 'application/json', **({'Authorization': 'Bearer ' + token} if token else {})})
+                               headers={'Content-Type': 'application/json', 'Accept': 'application/json, text/event-stream', **({'Authorization': 'Bearer ' + token} if token else {})})
     class NoRedirect(urllib.request.HTTPRedirectHandler):
         def redirect_request(self, *a, **k): return None
     try: return urllib.request.build_opener(NoRedirect).open(r).status
@@ -24,6 +24,8 @@ try:
     assert req('/api/sync', D, {'since': 0, 'changes': {'tasks': [{'id': 'a', 'updated_at': 1, 'date': '2026-11-11', 'text': 'hi'}]}}) == 200
     assert req('/api/sync', D, {'changes': {'tasks': [{'nope': 1}]}}) == 400
     assert req('/mcp', None, {}) == 401 and req('/mcp', D, {}) == 401                      # device token cannot reach MCP
+    ping = {'jsonrpc': '2.0', 'id': 1, 'method': 'ping'}
+    assert req('/mcp/' + M, None, ping) == 200 and req('/mcp/wrong', None, ping) == 401 and req('/mcp/' + D, None, ping) == 401  # token in path
     assert req('/mcp', M, {'jsonrpc': '2.0', 'id': 1, 'method': 'ping'}) not in (301, 302, 307, 308)  # never redirects
 
     open(tmp + '/x.apk', 'wb').write(b'PK')

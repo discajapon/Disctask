@@ -149,12 +149,15 @@ async def sync(request):
     except (ValueError, TypeError, AttributeError, KeyError):
         return JSONResponse({'error': 'bad request'}, status_code=400)
 
-# --- auth: /mcp needs the MCP token, /api/sync the device token; /api/health and /apk are public ---
+# --- auth: /mcp needs the MCP token (bearer header or /mcp/<token>), /api/sync the device token; /api/health and /apk are public ---
 class Auth:
     def __init__(self, app): self.app = app
     async def __call__(self, scope, receive, send):
         if scope['type'] == 'http':
             p = scope['path']
+            # connectors that cannot send a header (claude.ai custom connector, voice) carry the MCP token in the path
+            if p.startswith('/mcp/') and hmac.compare_digest(p[5:].encode(), MCP_TOKEN.encode()):
+                return await self.app(dict(scope, path='/mcp', raw_path=b'/mcp'), receive, send)
             want = MCP_TOKEN if p.startswith('/mcp') else DEVICE_TOKEN if p.startswith('/api/') and p != '/api/health' else None
             if want is not None and scope['method'] != 'OPTIONS':
                 h = dict(scope['headers']).get(b'authorization', b'').decode()
