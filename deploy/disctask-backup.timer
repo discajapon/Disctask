@@ -1,0 +1,9 @@
+[Unit]
+Description=Disctask daily backup
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+
+[Install]
+WantedBy=timers.target

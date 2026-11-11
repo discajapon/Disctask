@@ -1,0 +1,6 @@
+[Unit]
+Description=Disctask daily SQLite backup
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c 'mkdir -p /var/backups/disctask && python3 -c "import sqlite3,sys;s=sqlite3.connect(\'file:/var/lib/disctask/disctask.db?mode=ro\',uri=True);s.backup(sqlite3.connect(sys.argv[1]))" /var/backups/disctask/disctask-$(date +%%F).db && find /var/backups/disctask -name "*.db" -mtime +14 -delete'
