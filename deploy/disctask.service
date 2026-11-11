@@ -1,0 +1,20 @@
+[Unit]
+Description=Disctask sync API + remote MCP (discajapon.com/disctask)
+After=network.target
+
+[Service]
+User=disctask
+Group=disctask
+WorkingDirectory=/opt/disctask/app
+EnvironmentFile=/etc/disctask/env
+Environment=DISCTASK_DB=/var/lib/disctask/disctask.db
+ExecStart=/opt/disctask/venv/bin/uvicorn app:app --host 127.0.0.1 --port 8770 --proxy-headers
+Restart=on-failure
+StateDirectory=disctask
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
