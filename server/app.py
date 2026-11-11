@@ -1,14 +1,15 @@
 """Disctask server: /api (device sync) and /mcp (Claude, Streamable HTTP) over one SQLite store.
 Env: DISCTASK_DEVICE_TOKEN, DISCTASK_MCP_TOKEN (both required), DISCTASK_DB, DISCTASK_TZ.
 Run: uvicorn app:app --host 127.0.0.1 --port 8765  (behind the HTTPS reverse proxy)"""
-import hmac, json, os, re, time, uuid
+import hmac, json, mimetypes, os, re, time, uuid
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from mcp.server.fastmcp import FastMCP
 from mcp.server.transport_security import TransportSecuritySettings
 from starlette.middleware.cors import CORSMiddleware
-from starlette.responses import JSONResponse
-from starlette.routing import Route
+from starlette.responses import FileResponse, JSONResponse
+from starlette.routing import Mount, Route
+from starlette.staticfiles import StaticFiles
 import store
 
 DEVICE_TOKEN = os.environ.get('DISCTASK_DEVICE_TOKEN', '')
@@ -163,7 +164,11 @@ class Auth:
         await self.app(scope, receive, send)
 
 app = mcp.streamable_http_app()  # route /mcp, no redirects; reuses its lifespan (session manager)
-app.router.routes[:0] = [Route('/api/health', health), Route('/api/sync', sync, methods=['POST'])]
+# public download page (/) and APK files (/dl): version, date and sha256 come from dl/latest.json (see android/publish.sh)
+mimetypes.add_type('application/vnd.android.package-archive', '.apk')
+async def page(request): return FileResponse(os.path.join(os.path.dirname(__file__), 'static', 'index.html'), headers={'Cache-Control': 'no-cache'})
+app.router.routes[:0] = [Route('/', page), Route('/api/health', health), Route('/api/sync', sync, methods=['POST']),
+                         Mount('/dl', StaticFiles(directory=os.environ.get('DISCTASK_DL', '/var/lib/disctask/dl'), check_dir=False))]
 app.router.redirect_slashes = False
 app.add_middleware(Auth)
 # origins: desktop WebView (file:// -> "null") and the Capacitor APK

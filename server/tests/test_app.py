@@ -3,7 +3,7 @@ import asyncio, json, os, subprocess, sys, tempfile, time, urllib.request, urlli
 D, M = 'd' * 32, 'm' * 32
 here = os.path.dirname(os.path.abspath(__file__))
 tmp = tempfile.mkdtemp()
-env = {**os.environ, 'DISCTASK_DEVICE_TOKEN': D, 'DISCTASK_MCP_TOKEN': M, 'DISCTASK_DB': tmp + '/t.db'}
+env = {**os.environ, 'DISCTASK_DEVICE_TOKEN': D, 'DISCTASK_MCP_TOKEN': M, 'DISCTASK_DB': tmp + '/t.db', 'DISCTASK_DL': tmp}
 srv = subprocess.Popen([sys.executable, '-m', 'uvicorn', 'app:app', '--port', '8799', '--log-level', 'warning'],
                        cwd=os.path.join(here, '..'), env=env)
 U = 'http://127.0.0.1:8799'
@@ -25,6 +25,13 @@ try:
     assert req('/api/sync', D, {'changes': {'tasks': [{'nope': 1}]}}) == 400
     assert req('/mcp', None, {}) == 401 and req('/mcp', D, {}) == 401                      # device token cannot reach MCP
     assert req('/mcp', M, {'jsonrpc': '2.0', 'id': 1, 'method': 'ping'}) not in (301, 302, 307, 308)  # never redirects
+
+    open(tmp + '/x.apk', 'wb').write(b'PK')
+    page = urllib.request.urlopen(U + '/')
+    assert page.status == 200 and b'Disctask' in page.read()                              # public download page
+    f = urllib.request.urlopen(U + '/dl/x.apk')
+    assert f.status == 200 and f.headers['Content-Type'] == 'application/vnd.android.package-archive'
+    assert req('/dl/missing.apk') == 404
 
     from mcp import ClientSession
     from mcp.client.streamable_http import streamablehttp_client
