@@ -1,0 +1,6 @@
+{
+  "appId": "com.discajapon.disctask",
+  "appName": "Disctask",
+  "webDir": "www",
+  "server": { "androidScheme": "https" }
+}
