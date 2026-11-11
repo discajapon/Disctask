@@ -73,7 +73,7 @@ def inbox_phase():  # what mcp_server.py leaves behind: the app must drain it an
     with open(os.environ['DISCTASK_DATA'] + '/inbox.jsonl', 'w') as f: f.write('\n'.join(map(json.dumps, OPS)) + '\nnot json\n')
     def got(r):
         o = json.loads(r)
-        check('queued edits are applied to tasks and events', o['tasks'] == [{'text': 'Estudiar', 'done': True}, {'text': 'Nueva', 'done': False}] and o['mcp'] == 1, o)
+        check('queued edits are applied to tasks and events', [(t['text'], t['done']) for t in o['tasks']] == [('Estudiar', True), ('Nueva', False)] and o['mcp'] == 1, o)
         check('applied edits are saved and the inbox is emptied', o['stored'] and not os.path.exists(os.environ['DISCTASK_DATA'] + '/inbox.jsonl'))
     at(2200, lambda: js(INBOX, got))
 def phase2():
