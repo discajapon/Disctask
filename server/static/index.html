@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="es"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Disctask para Android</title>
+<style>
+:root{color-scheme:dark}
+body{margin:0;min-height:100vh;display:grid;place-items:center;font:16px/1.5 Georgia,serif;color:#fff;background:#1b1340 url(dl/bg.jpg) center/cover fixed}
+main{width:min(460px,92vw);padding:28px;border-radius:28px;background:rgba(30,20,50,.6);border:1.5px solid rgba(255,255,255,.45);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px)}
+h1{margin:0 0 4px;font-size:2em}
+dl{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:18px 0}
+dt{opacity:.7}dd{margin:0;word-break:break-all}
+a.btn{display:block;text-align:center;padding:12px;border-radius:16px;background:rgba(255,255,255,.25);border:1px solid rgba(255,255,255,.55);color:#fff;text-decoration:none;font-weight:600}
+a.btn:hover{background:rgba(255,255,255,.4)}
+small{display:block;margin-top:14px;opacity:.7}
+code{font-size:.85em}
+</style>
+<main>
+<h1>Disctask</h1>
+<p>Tareas y calendario para Android. Funciona sin conexión y se sincroniza con tu servidor cuando hay internet.</p>
+<div id=r>Cargando…</div>
+<small>Al instalar, Android pedirá permitir instalar apps de este navegador. Después, abre la app, toca <b>○ solo local</b> arriba y pega tu token de dispositivo.</small>
+</main>
+<script>
+fetch('dl/latest.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw 0;return r.json()}).then(v=>{
+ const d=new Date(v.date).toLocaleDateString('es',{day:'numeric',month:'long',year:'numeric'});
+ r.innerHTML=`<dl><dt>Versión</dt><dd>${v.version}</dd><dt>Fecha</dt><dd>${d}</dd><dt>Tamaño</dt><dd>${(v.size/1048576).toFixed(1)} MB</dd><dt>SHA-256</dt><dd><code>${v.sha256}</code></dd></dl>
+ <a class=btn href="dl/${v.file}" download>⬇ Descargar APK</a>`}).catch(()=>r.textContent='Todavía no hay un APK publicado.');
+</script>
+</html>
