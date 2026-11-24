@@ -83,4 +83,12 @@ store.sync(db, 0, {'tasks': [{'id': 'm', 'updated_at': 2000, 'text': 'fixed', 'f
 m = {r['id']: r for r in store.sync(db, 0, {})['tasks']}['m']
 assert m['text'] == 'fixed' and m['date'] == '2026-11-11' and m['done'] is False and m['updated_at'] == 2000
 os.remove(old)
+
+# a note pushed alone (Discanet bridge) never touches done or text, and an old client without note keeps it
+db = store.connect()
+store.sync(db, 0, {'tasks': [task('n', 1000, 'investigar')]})
+store.sync(db, 0, {'tasks': [dict(id='n', updated_at=2000, fields=['note'], note='resultado de Code')]})
+store.sync(db, 0, {'tasks': [task('n', 3000, 'investigar')]})   # APK viejo: registro entero sin note
+n = merged(db)['n']
+assert n['note'] == 'resultado de Code' and n['done'] is False and n['text'] == 'investigar'
 print('ok')
