@@ -80,7 +80,7 @@ def upsert(db, kind, rec, now_ms=None):
             if f in rec: new = _norm(f, rec[f])
             elif has: new = 0  # a full record without 'deleted' resurrects, as before
             else: new = vals[f]
-            if vals[f] != new or fts.get(f) != old['updated_at']: changed = True
+            if vals[f] != new or fts.get(f) != ts: changed = True
             vals[f] = new
             fts[f] = ts
         elif f in rec and _norm(f, rec[f]) != vals[f]:
