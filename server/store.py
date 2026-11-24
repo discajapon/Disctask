@@ -3,10 +3,10 @@ change counter (seq) so clients sync incrementally without trusting clocks for p
 import json, sqlite3, time
 
 COLS = {
-    'tasks': ('date', 'text', 'done', 'pos'),
+    'tasks': ('date', 'text', 'done', 'pos', 'note'),
     'events': ('date', 'start', 'end', 'title', 'color', 'desc'),
 }
-DEFAULT = {'text': '', 'done': 0, 'pos': 0, 'start': 0, 'end': 60, 'title': '', 'color': '', 'desc': ''}
+DEFAULT = {'text': '', 'note': '', 'done': 0, 'pos': 0, 'start': 0, 'end': 60, 'title': '', 'color': '', 'desc': ''}
 MAX_SKEW_MS = 5 * 60 * 1000  # a device clock ahead of this cannot win conflicts forever
 
 def connect(path=':memory:'):
@@ -19,8 +19,8 @@ def connect(path=':memory:'):
                    + 'updated_at integer not null, deleted integer not null default 0, seq integer not null)')
         db.execute(f'create index if not exists {t}_seq on {t}(seq)')
         have = [r[1] for r in db.execute(f'pragma table_info({t})')]
-        if 'fts' not in have:  # databases deployed before per-field merge
-            db.execute(f'alter table {t} add column fts text')
+        for c in cols + ('fts',):  # databases deployed before per-field merge / before a new field existed
+            if c not in have: db.execute(f'alter table {t} add column "{c}"')
     db.execute('create table if not exists conflicts (id integer primary key autoincrement, at integer, '
                'kind text, rec_id text, field text, kept text, lost text, kept_ts integer, lost_ts integer)')
     db.execute('create table if not exists meta (key text primary key, value integer)')
