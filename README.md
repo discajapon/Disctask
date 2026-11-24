@@ -30,7 +30,9 @@ To mirror the data on the VPS (and the phone), click the status button in the he
 
 - Every task and event has a UUID, an `updated_at` and soft deletes (tombstones). The first sync uploads what is already on the PC.
 - Changes queue locally and are sent a couple of seconds after an edit, on reconnect, and every 60 s, retrying with exponential backoff (5 s up to 5 min). The button shows `● sincronizado`, `◐ pendiente (n)`, `○ sin conexión` or `⚠ token`.
-- Conflicts: the newest edit **per record** wins (server keeps the max `updated_at`; a device clock more than 5 min ahead is clamped). A delete is just an edit, so a later edit resurrects it. Limitation: if two devices change different fields of the same task offline, one whole record wins.
+- Conflicts are resolved **per field**: the newest edit of each field wins (the server keeps a timestamp per field in `fts`; a device clock more than 5 min ahead is clamped), so a text edit on the PC and a tick on the phone both survive. Each losing value is logged in the server's `conflicts` table. The app sends only the fields it changed (`fields`); old clients that send whole records still work. A delete is just a field, so a later edit of it resurrects the task.
+- Tasks have an optional `note` (shown under the task). Discanet writes the result of a Claude Code run there; it never ticks the task.
+- The desktop app takes the server URL and device token from `~/.config/disctask/sync.env` (0600: `DISCTASK_URL`, `DISCTASK_DEVICE_TOKEN`, `DISCTASK_MCP_TOKEN`) every time it starts. The VPS is the source of truth; localStorage is the cache plus the offline queue.
 
 ## Server (VPS)
 `server/` is one Python process (Starlette + the `mcp` SDK, SQLite in WAL) behind the existing nginx at `https://discajapon.com/disctask/`:
@@ -47,18 +49,12 @@ Deploy: `./deploy/deploy.sh` (ssh as root, idempotent; creates the `disctask` us
 ## Tests
 `python3 server/tests/test_store.py` (sync rules, no deps) and `python3 server/tests/test_app.py` (auth, no-redirect MCP, sync over real HTTP). `python3 tests/test_sync.py` runs two real app pages through a real server (offline edits, delete vs edit, migration; needs a display, ~15 s). `python3 tests/test_app.py` runs the real app on a throwaway data dir (needs a display, ~50 s). `DISCTASK_DATA=<dir>` points the app at any data dir.
 
-## Local MCP (legacy, Claude Desktop and Claude Code)
-Superseded by the remote MCP above, which also works from Claude voice calls; this stdio server still works against the local app (its edits are synced like any other).
-
-`mcp_server.py` lets Claude read and edit your tasks and calendar events: `list_tasks`, `list_events` (optional `date`), `add_task`, `update_task`, `delete_task`, `add_event`, `update_event`, `delete_event`. Edits are not written to the app's database (the open app keeps its data in memory and would overwrite them): they are queued in `inbox.jsonl` in the data dir, and the app applies them within a second (or at next launch if it is closed). Reads come from the database, so they can lag a moment behind. Needs `pip install mcp`.
+## Local MCP (Claude Desktop and Claude Code)
+`mcp_server.py` (stdio) is a bridge to the remote MCP on the VPS: same tools, same data as `disctask-remote` (it fetches the tool list from the VPS and forwards every call). Token and URL come from `~/.config/disctask/sync.env`. Without internet its tools fail with a clear error; the desktop app keeps working offline. Needs `pip install mcp`.
 
     claude mcp add disctask --scope user -- python3 /path/to/Disctask/mcp_server.py
 
-For Claude Desktop add to `~/.config/Claude/claude_desktop_config.json` and restart it:
-
-    {"mcpServers": {"disctask": {"command": "python3", "args": ["/path/to/Disctask/mcp_server.py"]}}}
-
-`python3 tests/test_mcp.py` checks it.
+`python3 tests/test_mcp.py` starts a local server and checks the bridge returns exactly what the remote MCP returns.
 
 ## Font
 The UI uses Anthropic Serif. It is not in the repo (proprietary): install it system-wide, or drop the `.otf` files into `fonts/` (ignored by git). Without it the app falls back to Georgia.
