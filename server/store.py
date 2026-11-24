@@ -40,6 +40,7 @@ def _row(r):
     d.pop('seq', None)
     d.pop('fts', None)
     d['deleted'] = bool(d['deleted'])
+    if 'done' in d: d['done'] = bool(d['done'])
     return d
 
 def _norm(field, val):
