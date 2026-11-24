@@ -48,11 +48,11 @@ def view(kind, **where):
         if v: q.append(f'and {k}=?')
     rows = db.execute(' '.join(q) + ' order by date, ' + ('pos' if kind == 'tasks' else 'start, "end"'),
                       [v for v in where.values() if v]).fetchall()
-    return [{k: (bool(r[k]) if k == 'done' else r[k]) for k in r.keys() if k not in ('seq', 'deleted')} for r in rows]
+    return [{k: (bool(r[k]) if k == 'done' else r[k]) for k in r.keys() if k not in ('seq', 'deleted', 'fts')} for r in rows]
 
 @mcp.tool()
 def list_tasks(date: str = '', from_date: str = '', to_date: str = '') -> list:
-    """Tasks {id, date, text, done, pos}. Pass date for one day, or from_date/to_date (YYYY-MM-DD) for a range."""
+    """Tasks {id, date, text, done, pos, note}. Pass date for one day, or from_date/to_date (YYYY-MM-DD) for a range."""
     rows = view('tasks', date=date)
     return [t for t in rows if (not from_date or t['date'] >= from_date) and (not to_date or t['date'] <= to_date)]
 
@@ -62,17 +62,18 @@ def list_events(date: str = '') -> list:
     return view('events', date=date)
 
 @mcp.tool()
-def add_task(date: str, text: str, done: bool = False) -> str:
+def add_task(date: str, text: str, done: bool = False, note: str = '') -> str:
     """Add a task to a day (YYYY-MM-DD). Returns its id. It goes at the end of that day's list."""
     check_date(date)
     pos = max([t['pos'] for t in view('tasks', date=date)] or [0]) + 1
-    return put('tasks', str(uuid.uuid4()), date=date, text=text, done=done, pos=pos)
+    return put('tasks', str(uuid.uuid4()), date=date, text=text, done=done, pos=pos, note=note)
 
 @mcp.tool()
-def update_task(id: str, text: str | None = None, done: bool | None = None, date: str | None = None) -> str:
-    """Change text, done flag and/or day of the task with this id (from list_tasks)."""
+def update_task(id: str, text: str | None = None, done: bool | None = None, date: str | None = None,
+                note: str | None = None) -> str:
+    """Change text, done flag, day and/or note of the task with this id (from list_tasks)."""
     if date is not None: check_date(date)
-    return edit('tasks', id, text=text, done=done, date=date)
+    return edit('tasks', id, text=text, done=done, date=date, note=note)
 
 @mcp.tool()
 def complete_task(id: str, done: bool = True) -> str:
