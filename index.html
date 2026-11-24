@@ -47,6 +47,7 @@ li.lift{opacity:.45}
 li label{flex:1;cursor:pointer}
 li label{transition:opacity .3s}
 li.done label{text-decoration:line-through;opacity:.6}
+li label small.note{display:block;font-size:.78em;opacity:.75;white-space:pre-wrap;margin-top:4px;text-decoration:none}
 ul{padding:0;margin:0}
 input[type=checkbox]{appearance:none;-webkit-appearance:none;flex:none;width:26px;height:26px;border-radius:50%;cursor:pointer;position:relative;
  background:linear-gradient(135deg,rgba(255,255,255,.35),rgba(255,255,255,.08));border:1.5px solid rgba(255,255,255,.6);
@@ -185,6 +186,7 @@ function render(){
  a.forEach((k,i)=>{const li=document.createElement('li');li.className=k.done?'done':'';
   li.innerHTML='<input type=checkbox id=c'+i+'><label for=c'+i+'></label><button class=x>✕</button>';
   li.querySelector('label').textContent=k.text;
+  if(k.note){const n=document.createElement('small');n.className='note';n.textContent=k.note;li.querySelector('label').append(n)}
   li.onpointerdown=e=>taskDown(e,k,li);
   const c=li.querySelector('input');c.checked=k.done;
   c.onchange=()=>{k.done=c.checked;save();render()};
@@ -331,11 +333,17 @@ $('wh').onclick=e=>{const b=e.target.closest('button');if(b){day=b.dataset.d;ren
 const S=load('disctask-sync',{cursor:0,meta:{}},plain);S.meta??={};
 const saveS=()=>put('disctask-sync',S);
 const cfg=()=>({url:(localStorage['disctask-server']||'https://discajapon.com/disctask').replace(/\/+$/,''),token:localStorage['disctask-token']||''});
-const evFields=k=>[k.date,k.start,k.end,k.title,k.color,k.desc],taskFields=(d,t)=>[d,t.text,t.done?1:0,t.p];
+const evFields=k=>[k.date,k.start,k.end,k.title,k.color,k.desc],taskFields=(d,t)=>[d,t.text,t.done?1:0,t.p,t.note||''];
+const NAMES={tasks:['date','text','done','pos','note'],events:['date','start','end','title','color','desc']};
+// per-field sync: m.b = fields as last agreed with the server; only the fields that differ from it are sent, so edits
+// to different fields of the same record on two devices both survive. Old metas (4 task fields, no b) are upgraded in place.
+for(const id in S.meta){const m=S.meta[id];if(m.kind=='tasks'&&!m.v){try{const a=JSON.parse(m.h);if(a.length==4){a.push('');m.h=JSON.stringify(a)}}catch{}
+ if(!m.dirty)m.b=m.h;m.v=2}}
+const changed=(m)=>{if(!m.b||m.del)return null;const a=JSON.parse(m.h),b=JSON.parse(m.b);return NAMES[m.kind].filter((n,i)=>JSON.stringify(a[i])!==JSON.stringify(b[i]))};
 function reconcile(){
  const now=Date.now(),seen=new Set();let ch=false;
  const touch=(kind,id,f)=>{seen.add(id);const h=JSON.stringify(f),m=S.meta[id];
-  if(!m||m.h!==h||m.del){S.meta[id]={kind,u:now,h,dirty:1};ch=true}};
+  if(!m||m.h!==h||m.del){S.meta[id]={kind,u:now,h,dirty:1,v:2,b:m&&!m.del?m.b:undefined};ch=true}};
  for(const d in db){let top=Math.max(0,...db[d].map(t=>t.p||0)); // p = stable position within the day
   for(const t of db[d]){t.id??=uid();t.p??=++top;touch('tasks',t.id,taskFields(d,t))}}
  for(const k of ev)touch('events',k.id,evFields(k));
@@ -359,14 +367,14 @@ function notify(){if(!LN)return;clearTimeout(nt);nt=setTimeout(async()=>{try{
 function queue(){status();clearTimeout(qt);qt=setTimeout(syncNow,2000)}
 function applyRemote(r,kind,sent){const id=r.id,m=S.meta[id];
  if(m?.dirty&&m.h!==sent[id])return false; // edited while the request was in flight: keep ours, it goes out next round
- const rec=r.deleted?null:kind=='tasks'?(r.date&&{id,text:String(r.text??''),done:!!r.done,p:r.pos??0}):normEv(r);
+ const rec=r.deleted?null:kind=='tasks'?(r.date&&{id,text:String(r.text??''),done:!!r.done,p:r.pos??0,note:String(r.note??'')}):normEv(r);
  const h=rec&&JSON.stringify(kind=='tasks'?taskFields(r.date,rec):evFields(rec));
- if(rec&&m&&m.h===h){m.u=r.updated_at;m.dirty=0;return false} // already identical: don't replace objects the UI may hold
+ if(rec&&m&&m.h===h){m.u=r.updated_at;m.dirty=0;m.b=h;return false} // already identical: don't replace objects the UI may hold
  for(const d in db){const i=db[d].findIndex(t=>t.id==id);if(i>=0){db[d].splice(i,1);if(!db[d].length)delete db[d]}}
  const j=ev.findIndex(k=>k.id==id);if(j>=0)ev.splice(j,1);
  if(!rec){delete S.meta[id];return true}
  if(kind=='tasks'){(db[r.date]??=[]).push(rec);db[r.date].sort((a,b)=>a.p-b.p)}else ev.push(rec);
- S.meta[id]={kind,u:r.updated_at,h,dirty:0};return true}
+ S.meta[id]={kind,u:r.updated_at,h,b:h,dirty:0,v:2};return true}
 async function syncNow(){
  const c=cfg();if(busy||!c.token||Date.now()<next)return;
  if(drag||td||$('dlg').open){qt=setTimeout(syncNow,1500);return} // never swap objects under an active drag/editor
@@ -374,7 +382,7 @@ async function syncNow(){
  const out={tasks:[],events:[]},sent={},loc=new Map();
  for(const d in db)for(const t of db[d])loc.set(t.id,{...t,date:d,pos:t.p});for(const k of ev)loc.set(k.id,k);
  for(const id in S.meta){const m=S.meta[id];if(!m.dirty)continue;sent[id]=m.h;
-  out[m.kind].push({...(m.del?{}:loc.get(id)),id,updated_at:m.u,deleted:!!m.del})}
+  const f=changed(m);out[m.kind].push({...(m.del?{}:loc.get(id)),id,updated_at:m.u,deleted:!!m.del,...(f?{fields:f}:{})})}
  try{
   const res=await fetch(c.url+'/api/sync',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+c.token},body:JSON.stringify({since:S.cursor,changes:out})});
   if(res.status==401){state='auth';throw 0}
@@ -382,7 +390,7 @@ async function syncNow(){
   const r=await res.json();
   if(drag||td||$('dlg').open){busy=false;qt=setTimeout(syncNow,1500);return} // started a drag meanwhile: discard, resending is idempotent
   let ch=false;for(const x of r.tasks)ch|=applyRemote(x,'tasks',sent);for(const x of r.events)ch|=applyRemote(x,'events',sent);
-  for(const id in sent){const m=S.meta[id];if(m&&m.h===sent[id]){if(m.del)delete S.meta[id];else m.dirty=0}}
+  for(const id in sent){const m=S.meta[id];if(m&&m.h===sent[id]){if(m.del)delete S.meta[id];else{m.dirty=0;m.b=m.h}}}
   S.cursor=r.cursor;fails=0;state='ok';next=0;
   put('disctask',db);put('disctask-cal',ev);saveS();if(ch)render()
  }catch(e){fails++;next=Date.now()+Math.min(300000,5000*2**fails);if(state!='auth')state='offline'
