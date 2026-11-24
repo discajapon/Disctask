@@ -89,6 +89,27 @@ try:
         check(f'{n}: event edit synced', x['ev'][0]['title'] == 'B title', x['ev'])
     t = {x['id']: x for x in server()['tasks']}
     check('server keeps the delete as a tombstone', sum(x['deleted'] for x in t.values()) == 1, t)
+
+    # per field: offline, A edits the text and B ticks the same task; both edits survive on both devices
+    for v in (A, B): cfg(v, 'http://127.0.0.1:1')
+    js(A, "db['2026-11-12'][0].text='A text';save();1"); time.sleep(0.05)
+    js(B, "db['2026-11-12'][0].done=true;save();1")
+    for v in (A, B): cfg(v, URL)
+    for v in (A, B, A): check('per-field reconnect syncs', sync(v))
+    for n, v in (('A', A), ('B', B)):
+        x = state(v)['db']['2026-11-12'][0]
+        check(f'{n}: text from A and done from B both kept', x['text'] == 'A text' and x['done'] is True, x)
+    # a note written on the server (Discanet bridge) reaches the app, shows, and survives a local edit
+    tid = state(A)['db']['2026-11-12'][0]['id']
+    r = urllib.request.Request(URL + '/api/sync', data=json.dumps({'since': 0, 'changes': {'tasks': [
+        {'id': tid, 'updated_at': int(time.time() * 1000), 'fields': ['note'], 'note': 'resultado de Code'}]}}).encode(),
+        headers={'Authorization': 'Bearer ' + D, 'Content-Type': 'application/json'})
+    urllib.request.urlopen(r).read()
+    check('A pulls the note', sync(A) and state(A)['db']['2026-11-12'][0].get('note') == 'resultado de Code', state(A)['db'])
+    check('note is shown', 'resultado de Code' in js(A, "day='2026-11-12';render();$('l').textContent"))
+    js(A, "db['2026-11-12'][0].text='A text 2';save();1"); sync(A)
+    t = {x['id']: x for x in server()['tasks']}[tid]
+    check('local edit keeps the note and done', t['note'] == 'resultado de Code' and t['done'] and t['text'] == 'A text 2', t)
 finally:
     srv.terminate()
 print('FAILED: ' + ', '.join(fails) if fails else 'ALL OK'); sys.exit(1 if fails else 0)
