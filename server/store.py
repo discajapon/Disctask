@@ -1,6 +1,6 @@
-"""Disctask central store: SQLite with last-write-wins per record, soft deletes and a server-side
+"""Disctask central store: SQLite with last-write-wins per field, soft deletes and a server-side
 change counter (seq) so clients sync incrementally without trusting clocks for paging."""
-import sqlite3, time
+import json, sqlite3, time
 
 COLS = {
     'tasks': ('date', 'text', 'done', 'pos'),
@@ -18,6 +18,11 @@ def connect(path=':memory:'):
                    + ''.join(f'"{c}", ' for c in cols)
                    + 'updated_at integer not null, deleted integer not null default 0, seq integer not null)')
         db.execute(f'create index if not exists {t}_seq on {t}(seq)')
+        have = [r[1] for r in db.execute(f'pragma table_info({t})')]
+        if 'fts' not in have:  # databases deployed before per-field merge
+            db.execute(f'alter table {t} add column fts text')
+    db.execute('create table if not exists conflicts (id integer primary key autoincrement, at integer, '
+               'kind text, rec_id text, field text, kept text, lost text, kept_ts integer, lost_ts integer)')
     db.execute('create table if not exists meta (key text primary key, value integer)')
     db.execute("insert or ignore into meta values ('seq', 0)")
     db.commit()
@@ -33,26 +38,64 @@ def cursor(db):
 def _row(r):
     d = dict(r)
     d.pop('seq', None)
+    d.pop('fts', None)
     d['deleted'] = bool(d['deleted'])
     return d
 
+def _norm(field, val):
+    if field in ('done', 'deleted'): return int(bool(val))
+    return val if val is not None else DEFAULT.get(field)
+
 def upsert(db, kind, rec, now_ms=None):
-    """Apply one client record. Returns True if it won (and was stored)."""
+    """Apply one client record field by field: the newest edit of each field wins.
+    Returns True if every candidate field won (or the record is new)."""
     now_ms = now_ms or int(time.time() * 1000)
     rid = str(rec['id'])
     ts = min(int(rec['updated_at']), now_ms + MAX_SKEW_MS)
-    cur = db.execute(f'select updated_at from {kind} where id=?', (rid,)).fetchone()
-    if cur and cur['updated_at'] > ts:  # ponytail: ties go to the newcomer; per-field merge if it ever hurts
-        return False
+    tracked = COLS[kind] + ('deleted',)
     old = db.execute(f'select * from {kind} where id=?', (rid,)).fetchone()
-    vals = {c: rec.get(c, old[c] if old else DEFAULT.get(c)) for c in COLS[kind]}
-    if kind == 'tasks': vals['done'] = int(bool(vals['done']))
-    seq = _next_seq(db)
-    names = ('id',) + COLS[kind] + ('updated_at', 'deleted', 'seq')
-    args = (rid, *vals.values(), ts, int(bool(rec.get('deleted'))), seq)
-    db.execute(f'insert or replace into {kind} ({",".join(chr(34)+n+chr(34) for n in names)}) '
-               f'values ({",".join("?" * len(names))})', args)
-    return True
+    if old is None:
+        vals = {c: _norm(c, rec.get(c)) for c in COLS[kind]}
+        vals['deleted'] = int(bool(rec.get('deleted')))
+        fts = {c: ts for c in tracked}
+        seq = _next_seq(db)
+        names = ('id',) + COLS[kind] + ('deleted', 'updated_at', 'seq', 'fts')
+        args = (rid, *vals.values(), ts, seq, json.dumps(fts))
+        db.execute(f'insert or replace into {kind} ({",".join(chr(34)+n+chr(34) for n in names)}) '
+                   f'values ({",".join("?" * len(names))})', args)
+        return True
+    if 'fields' in rec:
+        cands = [f for f in rec['fields'] if f in tracked]
+    else:
+        cands = [c for c in COLS[kind] if c in rec] + ['deleted']
+    fts = json.loads(old['fts']) if old['fts'] else {}
+    vals, lost_any, changed = {}, False, False
+    for c in COLS[kind]: vals[c] = _norm(c, old[c])
+    vals['deleted'] = int(bool(old['deleted']))
+    for f in cands:
+        cur_ts = fts.get(f, old['updated_at'])
+        if ts >= cur_ts:
+            has = f == 'deleted' and 'fields' not in rec
+            if f in rec: new = _norm(f, rec[f])
+            elif has: new = 0  # a full record without 'deleted' resurrects, as before
+            else: new = vals[f]
+            if vals[f] != new or fts.get(f) != old['updated_at']: changed = True
+            vals[f] = new
+            fts[f] = ts
+        elif f in rec and _norm(f, rec[f]) != vals[f]:
+            db.execute('insert into conflicts (at, kind, rec_id, field, kept, lost, kept_ts, lost_ts) '
+                       'values (?,?,?,?,?,?,?,?)',
+                       (int(time.time() * 1000), kind, rid, f,
+                        json.dumps(vals[f]), json.dumps(rec[f]), cur_ts, ts))
+            lost_any = True
+    updated_at = max(fts.values()) if fts else old['updated_at']
+    if changed or updated_at != old['updated_at']:
+        seq = _next_seq(db)
+        names = ('id',) + COLS[kind] + ('deleted', 'updated_at', 'seq', 'fts')
+        args = (rid, *vals.values(), updated_at, seq, json.dumps(fts))
+        db.execute(f'insert or replace into {kind} ({",".join(chr(34)+n+chr(34) for n in names)}) '
+                   f'values ({",".join("?" * len(names))})', args)
+    return not lost_any
 
 def changes_since(db, since):
     out = {}
@@ -74,6 +117,9 @@ def sync(db, since, changes, now_ms=None):
         have = {r['id'] for r in out[kind]}
         out[kind] += [_row(db.execute(f'select * from {kind} where id=?', (i,)).fetchone()) for i in ids if i not in have]
     return {'cursor': cursor(db), **out}
+
+def conflicts(db, limit=50):
+    return [dict(r) for r in db.execute('select * from conflicts order by id desc limit ?', (limit,))]
 
 def purge(db, days=90):
     cut = int((time.time() - days * 86400) * 1000)
