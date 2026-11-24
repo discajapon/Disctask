@@ -36,6 +36,16 @@ def policy(v, dec, kind):  # web links open in the default browser, not inside t
     return False
 v.connect('decide-policy', policy)
 v.connect('web-process-terminated', lambda v, why: v.reload())  # data lives in localStorage, a reload loses nothing
+def sync_cfg(v, ev):  # the VPS is the source of truth: the token comes from ~/.config/disctask/sync.env (600), never the repo
+    if ev != WebKit2.LoadEvent.FINISHED: return
+    try: env = dict(l.strip().split('=', 1) for l in open(os.path.expanduser('~/.config/disctask/sync.env')) if '=' in l)
+    except OSError: return
+    if env.get('DISCTASK_DEVICE_TOKEN') and not os.environ.get('DISCTASK_DATA'):  # tests use their own data dir and server
+        v.run_javascript("if(localStorage['disctask-token']!==%s||localStorage['disctask-server']!==%s){localStorage['disctask-server']=%s;"
+                         "localStorage['disctask-token']=%s;state='';next=0;fails=0;status();syncNow()}"
+                         % (json.dumps(env['DISCTASK_DEVICE_TOKEN']), json.dumps(env['DISCTASK_URL']),
+                            json.dumps(env['DISCTASK_URL']), json.dumps(env['DISCTASK_DEVICE_TOKEN'])))
+v.connect('load-changed', sync_cfg)
 v.load_uri('file://' + os.path.join(os.path.dirname(os.path.realpath(__file__)), 'index.html'))
 inbox = os.path.join(d, 'inbox.jsonl')  # edits appended by mcp_server.py; the page applies them to its own state
 def drain():
