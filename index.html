@@ -44,7 +44,7 @@ li.lift{opacity:.45}
  background:linear-gradient(135deg,rgba(255,255,255,.45),rgba(255,255,255,.18));border:1px solid rgba(255,255,255,.75);
  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 12px 30px rgba(0,0,0,.4),inset 0 1px 1px rgba(255,255,255,.8);
  text-shadow:0 1px 3px rgba(0,0,0,.6);rotate:-2deg;scale:1.04}
-li label{flex:1;cursor:pointer}
+li label{flex:1;min-width:0;overflow-wrap:anywhere;cursor:pointer} /* long unbroken text (links) wraps and the card grows, so ✕ stays visible */
 li label{transition:opacity .3s}
 li.done label{text-decoration:line-through;opacity:.6}
 li label small.note{display:block;font-size:.78em;opacity:.75;white-space:pre-wrap;margin-top:4px;text-decoration:none}
@@ -62,7 +62,7 @@ input[type=checkbox]::after{content:"";position:absolute;left:8px;top:3px;width:
  transform:rotate(45deg) scale(0);filter:drop-shadow(0 1px 2px rgba(0,80,30,.6));transition:transform .35s cubic-bezier(.34,1.56,.64,1) .1s}
 input[type=checkbox]:checked::after{transform:rotate(45deg) scale(1)}
 @keyframes bounce{40%{transform:scale(1.3)}}
-.x{padding:2px 9px}
+.x{flex:none;padding:2px 9px}
 .wrap{display:flex;align-items:center;justify-content:center;padding:24px 16px}
 main>header{display:flex;align-items:center;justify-content:space-between;gap:8px}
 #cb.on{background:rgba(255,255,255,.45);box-shadow:0 0 18px rgba(255,255,255,.45),inset 0 1px 1px rgba(255,255,255,.8)}
